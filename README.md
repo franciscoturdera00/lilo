@@ -6,7 +6,7 @@ teams, relays their messages back to the operator, and owns the shared
 tool registry. Lilo only writes to this repo and to sibling projects'
 `.lilo-inbox/` / `.lilo-outbox/` — never to sibling project code.
 
-`CLAUDE.md` is the source of truth for behavior. This file is the map.
+[`CLAUDE.md`](CLAUDE.md) is the source of truth for behavior. This file is the map.
 
 ## Contents
 
@@ -69,7 +69,7 @@ caffeinate -is claude --channels plugin:telegram@claude-plugins-official --chrom
 - `--chrome` — pairs with the installed extension for browser automation
 
 Run in **AUTO permission mode** (toggle with `Shift+Tab` until the
-footer reads `auto`). AUTO honours the `.claude/settings.json` allowlist
+footer reads `auto`). AUTO honours the [`.claude/settings.json`](.claude/settings.json) allowlist
 without prompting on every call. `acceptEdits` is not enough — it skips
 file prompts but not Bash/MCP. In a sandboxed VM you can append
 `--dangerously-skip-permissions` to bypass the allowlist entirely.
@@ -81,9 +81,10 @@ tmux new -s lilo "caffeinate -is claude --channels plugin:telegram@claude-plugin
 ```
 
 **MCPs Lilo uses:** `claude-universe-tools` and `playwright` (both in
-`.mcp.json`), `telegram` (from `--channels`), `claude-in-chrome` (from
-`--chrome`). Account-level MCPs (Notion, Figma, Gmail, etc.) come from
-Claude Code's own config.
+`.mcp.json` — see [`.mcp.recommended.json`](.mcp.recommended.json)),
+`telegram` (from `--channels`), `claude-in-chrome` (from `--chrome`).
+Account-level MCPs (Notion, Figma, Gmail, etc.) come from Claude Code's
+own config.
 
 ## First run
 
@@ -91,8 +92,8 @@ Claude Code's own config.
 2. Start Lilo with the launch command above.
 3. First prompt: `bootstrap`.
 
-Lilo reads `BOOTSTRAP.md` and walks you through `.mcp.json` (copies
-`.mcp.recommended.json`), the tools-bridge venv, `USER.md`, optional
+Lilo reads [`BOOTSTRAP.md`](BOOTSTRAP.md) and walks you through `.mcp.json` (copies
+[`.mcp.recommended.json`](.mcp.recommended.json)), the tools-bridge venv, `USER.md`, optional
 platform MCPs (`ios-simulator` on macOS), Telegram setup, and an
 optional smoke-test project. The supported minimum is zero servers —
 Lilo runs with an empty `.mcp.json`, just without the tool bridge or
@@ -112,23 +113,24 @@ cleans up.
 ## Operator commands
 
 Natural-language. Intent routing lives in the skill descriptions under
-`.claude/skills/` — just say what you want. Anything actionable that
+[`.claude/skills/`](.claude/skills/) — just say what you want. Anything actionable that
 isn't a management skill: Lilo checks the `claude-universe-tools` MCP
 for a registered tool action before writing custom logic.
 
 | Skill | Phrase | What it does |
 |-------|--------|--------------|
-| `bootstrap` | `bootstrap` | First-run setup |
-| `new-project` | `new project <name>` | Scaffolds a sibling, auto-launches PM tmux. `--profile mvp\|work` picks an overlay. |
-| `pm` | `pm`, `pm start X`, `pm stop X` | Status, or start/stop a PM tmux session |
-| `sync` | `sync` | Sweep outboxes, refresh dashboard if anything queued |
-| `poll` | `poll on` / `poll off` | Toggle the recurring `/sync` cron (off by default) |
-| `find-agent` | `find an agent for <role>` | Vet + import a specialist into the registry |
-| `kill` | `kill the session`, `wrap up` | Pre-exit pass: scan, save lessons, commit routine, branch off risky |
+| `bootstrap` | `bootstrap` | First-run setup (script: [`BOOTSTRAP.md`](BOOTSTRAP.md)) |
+| [`new-project`](.claude/skills/new-project/) | `new project <name>` | Scaffolds a sibling, auto-launches PM tmux. `--profile mvp\|work` picks an overlay. |
+| [`pm`](.claude/skills/pm/) | `pm`, `pm start X`, `pm stop X` | Status, or start/stop a PM tmux session |
+| [`sync`](.claude/skills/sync/) | `sync` | Sweep outboxes, refresh dashboard if anything queued |
+| [`poll`](.claude/skills/poll/) | `poll on` / `poll off` | Toggle the recurring `/sync` cron (off by default) |
+| [`find-agent`](.claude/skills/find-agent/) | `find an agent for <role>` | Vet + import a specialist into the registry |
+| [`kill`](.claude/skills/kill/) | `kill the session`, `wrap up` | Pre-exit pass: scan, save lessons, commit routine, branch off risky |
 
-Niche: `nuke-project`, `sweep` / `pipeline` (halves of `/sync`),
-`toolify` (expose a project as an MCP tool), `team-ops` (internal — PM
-launch, outbox routing, feedback aggregation).
+Niche: [`nuke-project`](.claude/skills/nuke-project/),
+[`sweep`](.claude/skills/sweep/) / [`pipeline`](.claude/skills/pipeline/) (halves of `/sync`),
+[`toolify`](.claude/skills/toolify/) (expose a project as an MCP tool),
+[`team-ops`](.claude/skills/team-ops/) (internal — PM launch, outbox routing, feedback aggregation).
 
 ## Communication
 
@@ -137,20 +139,20 @@ scheduled sweep.
 
 - **PM -> Lilo:** PMs write JSON messages into
   `../<project>/.lilo-outbox/`. Each carries a type and priority
-  (schema in `team-ops`).
-- **Sweep:** the `outbox-sweeper` subagent (haiku, filesystem-only,
+  (schema in [`team-ops`](.claude/skills/team-ops/)).
+- **Sweep:** the [`outbox-sweeper`](.claude/agents/outbox-sweeper.md) subagent (haiku, filesystem-only,
   isolated context) scans every sibling outbox, archives processed
   messages, and returns a JSON summary to Lilo. Burns subagent
   context, not Lilo's.
 - **Lilo -> operator:** Lilo relays per the routing rules in
-  `CLAUDE.md` — urgent/blocker pings immediately, status/low batches,
+  [`CLAUDE.md`](CLAUDE.md) — urgent/blocker pings immediately, status/low batches,
   ratings flow into the registry feedback loop. Channel is whichever
   you're on (Telegram if remote, terminal if local — never both).
 - **Operator -> PM:** Lilo doesn't push to PMs unless asked. To send
   something into a PM, drop a file into `../<project>/.lilo-inbox/`.
 
 `/sync` runs the sweep and, only if new messages were found,
-dispatches the `pipeline-syncer` subagent to refresh the Notion
+dispatches the [`pipeline-syncer`](.claude/agents/pipeline-syncer.md) subagent to refresh the Notion
 dashboard. Steady state is zero Notion calls when nothing's queued.
 
 `/poll on` registers `/sync` as a recurring cron at `7,37 * * * *`
@@ -162,7 +164,7 @@ operator opts in. Run `/sync` manually anytime to flush on demand.
 The "build a tool with Lilo, then let Lilo call it" loop:
 
 1. `new project: my-tool` — build whatever you want in there.
-2. `toolify my-tool` — packages it against the standard tool interface
+2. [`toolify`](.claude/skills/toolify/) `my-tool` — packages it against the standard tool interface
    and registers it in `./tools/registry.json`.
 3. Restart the MCP bridge. The tool is callable as `<my-tool>.<action>`
    (every tool exposes a `<tool>.doctor` health check).
@@ -170,11 +172,11 @@ The "build a tool with Lilo, then let Lilo call it" loop:
    action instead of writing logic from scratch.
 
 `./tools/registry.json` is the single source of truth for what's
-callable. `registry.example.json` is the empty template for fresh clones.
+callable. [`registry.example.json`](tools/registry.example.json) is the empty template for fresh clones.
 
 ## Agent registry
 
-`templates/team/.claude/agent-registry/` is the curated specialist
+[`templates/team/.claude/agent-registry/`](templates/team/.claude/agent-registry/) is the curated specialist
 roster PMs recruit from. A mix of:
 
 - **Custom agents** for this orchestrator (`code`, `scraper`,
@@ -192,7 +194,7 @@ roster PMs recruit from. A mix of:
   `tdd-guide`, `e2e-runner`, `doc-updater`, `docs-lookup`,
   `a11y-architect`, `seo-specialist`
 
-See `templates/team/.claude/agent-registry/README.md` for the full
+See [`templates/team/.claude/agent-registry/README.md`](templates/team/.claude/agent-registry/README.md) for the full
 roster with model tiers and use cases.
 
 ## Advisor
@@ -213,9 +215,9 @@ Enable once at user level (lights up Lilo, every PM, every specialist):
 
 ## Feedback loop
 
-`agent-feedback.jsonl` accumulates ratings from every PM `done` report
-(`poor` / `adequate` / `effective`). The `outbox-sweeper` appends new
-ratings on each sweep and runs `.claude/skills/sync/aggregate-feedback.sh`
+[`agent-feedback.jsonl`](agent-feedback.jsonl) accumulates ratings from every PM `done` report
+(`poor` / `adequate` / `effective`). The [`outbox-sweeper`](.claude/agents/outbox-sweeper.md) appends new
+ratings on each sweep and runs [`.claude/skills/sync/aggregate-feedback.sh`](.claude/skills/sync/aggregate-feedback.sh)
 when a `done` lands. The aggregator flags any specialist meeting team-ops
 thresholds (2+ `poor` across distinct projects OR 4+ `adequate`) and
 Lilo refines the registry spec at
@@ -223,7 +225,7 @@ Lilo refines the registry spec at
 
 ## Trust model
 
-Lilo's `.claude/settings.json` has wide Bash allowlists and Write/Edit
+Lilo's [`.claude/settings.json`](.claude/settings.json) has wide Bash allowlists and Write/Edit
 globs covering this repo and its parent. Things to know:
 
 - **Registering a tool** = trusting its adapter code (arbitrary Python)
