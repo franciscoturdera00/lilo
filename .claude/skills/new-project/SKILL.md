@@ -14,7 +14,7 @@ relay, the whole setup. There is no single-session option.
 - `<name>` — project directory name (slug-style, no spaces)
 - `--profile <mvp|work>` — optional config overlay (default: `mvp`)
   - `mvp` — loose defaults: `--dangerously-skip-permissions`, all account connectors blocked via `--strict-mcp-config`, permissive Bash/MCP allowlist. Right for personal/experimental projects.
-  - `work` — tightened defaults: `--permission-mode auto` (Claude self-vets each tool call, auto-approving safe ones and blocking risky ones), strict-mcp dropped so work connectors load (HubSpot/GitHub/ClickUp/Figma), personal connectors (Telegram/Notion/Gmail/Drive/Calendar/Supabase/Netlify/Indeed/claude-universe-tools/computer-use/picarx) explicitly denied, `git push` / `npm publish` / destructive ops on the deny list, ssh/scp/rsync denied. Right for paid-client work.
+  - `work` — tightened defaults: `--permission-mode auto` (Claude self-vets each tool call, auto-approving safe ones and blocking risky ones), strict-mcp dropped so work connectors load (HubSpot/GitHub/ClickUp/Figma), personal connectors (Telegram/Notion/Gmail/Drive/Calendar/Supabase/Netlify/claude-universe-tools/computer-use/picarx) explicitly denied, `git push` / `npm publish` / destructive ops on the deny list, ssh/scp/rsync denied. Right for paid-client work.
 
 If the operator describes the project context but doesn't name a profile, infer it: client work → `work`, anything else → `mvp`. Confirm with the operator before scaffolding if it's ambiguous.
 
