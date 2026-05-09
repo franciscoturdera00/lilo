@@ -1,15 +1,17 @@
 # orchestrator (Lilo)
 
 **Lilo** is a long-running Claude Code session that encapsulates and
-manages your projects under a standardized framework: each project
-lives as a sibling directory, runs its own PM-led Claude Code team in
-a tmux pane, and communicates with Lilo through a typed inbox/outbox
-protocol. Every project scaffolds from customizable templates — agent
-registry, permissions allowlist, MCP wiring, state files, and
-slash-command skills. Lilo handles scaffolding, lifecycle, periodic
-outbox sweeps, message routing to your phone or terminal, a shared MCP
-tool registry that exposes sibling projects as callable actions, and a
-Notion dashboard that mirrors live project status.
+manages your projects under a standardized framework. Each project
+lives as a sibling directory and runs its own **project-manager (PM)**
+— a Claude Code session in a tmux pane that recruits specialist
+subagents, tracks state, and drives the work. The PM communicates with
+Lilo through a typed inbox/outbox protocol. Every project scaffolds
+from customizable templates — agent registry, permissions allowlist,
+MCP wiring, state files, and slash-command skills. Lilo handles
+scaffolding, lifecycle, periodic outbox sweeps, message routing to
+your phone or terminal, a shared MCP tool registry that exposes
+sibling projects as callable actions, and a Notion dashboard that
+mirrors live project status.
 
 [`CLAUDE.md`](CLAUDE.md) is the source of truth for behavior. This file is the map.
 
