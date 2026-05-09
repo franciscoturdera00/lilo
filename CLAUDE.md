@@ -31,6 +31,7 @@ The recurring sweep/pipeline crons are **off by default**. The operator opts in 
 
 The operator drives Lilo with natural-language requests. Most of them are handled by skills in `.claude/skills/` — the skill descriptions own intent matching, so you do not need to re-derive triggers here. Available skills:
 
+- **`bootstrap`** — first-run setup script for a fresh clone (`.mcp.json`, tools-bridge venv, `USER.md`, optional Telegram, optional pipeline dashboard, smoke test)
 - **`new-project`** — scaffold a sibling project (team template, always — PM + specialist agents, auto-launches in tmux)
 - **`nuke-project`** — delete a sibling project (always confirms first)
 - **`pm`** — list sibling projects and live tmux sessions (no args), or operate on a specific PM (`pm start <name>`, `pm stop <name>`)
@@ -41,10 +42,6 @@ The operator drives Lilo with natural-language requests. Most of them are handle
 - **`sync`** — umbrella: runs `/sweep`, then runs `/pipeline` only if the sweeper found new messages. Stays cheap when nothing's queued. This is what the `/poll`-registered cron fires.
 - **`toolify`** — package a sibling project into the `tools/` framework so it's callable via the MCP bridge
 - **`find-agent`** — safely find, vet, and import a new specialist agent from an external source into the registry (mandatory prompt-injection scan before anything lands)
-
-### bootstrap
-
-First-run setup is the one intent that does not live in a skill. When the operator says `bootstrap` (or something clearly equivalent — "walk me through setup", "first-time setup", etc.), read `BOOTSTRAP.md` in this repo and follow it step-by-step. That file is the script; do not improvise. Skip steps that are already done (e.g. if `USER.md` exists and looks complete, confirm it and move on).
 
 ## PM message handling
 
@@ -85,7 +82,7 @@ Single source of truth: `templates/team/.claude/agent-registry/*.md`. One spec p
   - `code-reviewer` — review orchestrator/tools changes before committing
   - `security-reviewer` — security pass when adding MCPs, hooks, skills, or touching trust boundaries
   - `silent-failure-hunter` — hunt swallowed errors in hooks, skills, and orchestrator code
-  - `document-critic` — review docs (README, BOOTSTRAP.md, CLAUDE.md)
+  - `document-critic` — review docs (README, CLAUDE.md, skill SKILL.md files)
   - `design-critic` — harsh quality critique of user-facing content in the repo
   - `stitch-operator` — drives the PicarX robot (Stitch) via the `picarx` MCP. Haiku, scoped to picarx tools only. Dispatched for any "tell Stitch to..." request.
 

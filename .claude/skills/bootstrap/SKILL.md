@@ -1,6 +1,11 @@
-# Bootstrap
+---
+name: bootstrap
+description: First-run setup script Lilo follows on a fresh clone. Walks the operator through `.mcp.json`, the tools-bridge venv, `USER.md`, optional platform MCPs (`ios-simulator` on macOS), Telegram setup, the optional Notion pipeline dashboard, and an optional smoke-test project. Use when the operator says "bootstrap", "walk me through setup", "first-time setup", or anything clearly equivalent. Skip steps that are already done (e.g. if `USER.md` exists and looks complete, confirm it and move on).
+---
 
-Lilo: follow this script the first time you are launched in a fresh clone of this repo. The operator will trigger it by saying `bootstrap` (or anything equivalent) on the first prompt. Run through the steps in order, one question at a time — do not dump all the questions at once. Keep it conversational.
+# bootstrap
+
+Follow this script the first time you are launched in a fresh clone of this repo. Run through the steps in order, one question at a time — do not dump all the questions at once. Keep it conversational.
 
 Skip steps that are already done (e.g. if `USER.md` exists and looks filled in, just confirm it with the operator and move on).
 
@@ -69,13 +74,19 @@ Three gitignored templates the operator needs locally. Check and create if missi
 
 ## Step 2 — MCP suggestions
 
-Check what MCP servers are already wired (`claude mcp list`, and read `.mcp.json`). Suggest the two below if they're missing. Do **not** install without explicit permission.
+Check what MCP servers are already wired (`claude mcp list`, and read `.mcp.json`). Suggest the three below if they're missing. Do **not** install without explicit permission.
+
+### Notion (recommended)
+
+Powers the optional pipeline dashboard in Step 5 — a live cross-project view that refreshes on the cron tick. Even without the dashboard, Notion is useful for any project that needs shared docs/tasks the operator already lives in.
+
+Install pointer: account-level connector — the operator adds it through the Claude account settings, not in this repo. Point them to the install flow. If they decline, note that Step 5 will be skipped.
 
 ### Supabase
 
 Useful for projects that need a hosted Postgres, auth, storage, or edge functions without standing up infra. If the operator works on web apps or anything with a backend, suggest it.
 
-Install pointer: the Supabase MCP is an account-level integration — the operator adds it through the Claude account settings, not in this repo. Point them to the install flow and offer to continue once they confirm it's connected.
+Install pointer: also account-level — same flow as Notion. Offer to continue once they confirm it's connected.
 
 ### Playwright
 
@@ -152,6 +163,9 @@ Suggest running `new project: hello` to scaffold a throwaway project and verify 
 
 ## Step 7 — Wrap up
 
-- Recap what was set up, what was skipped, and any next steps the operator still owes (e.g. install Supabase MCP in account settings).
+- Recap what was set up, what was skipped, and any next steps the operator still owes (e.g. install Notion or Supabase MCP in account settings).
+- Mention two opt-ins they may want now that setup is done:
+  - **`/advisor opus`** — enables a pooled opus-level reviewer that Lilo, every PM, and every specialist can consult on judgment calls. One-time user-level setting. `/advisor off` disables.
+  - **`/poll on`** — registers the recurring `/sync` cron (sweep + dashboard refresh, twice an hour). Off by default; the operator opts in. `/poll off` removes it. Manual `/sync` works any time without the cron.
 - Remind them that `USER.md` is gitignored — safe to commit the repo without leaking their profile.
 - Stop. Wait for the operator's next instruction.

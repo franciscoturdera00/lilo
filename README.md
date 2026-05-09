@@ -48,7 +48,6 @@ inside this repo.
       CLAUDE.md              # Lilo's operating manual (imports @USER.md)
       USER.md.example        # template for the operator profile
       USER.md                # gitignored — created during `bootstrap`
-      BOOTSTRAP.md           # script Lilo follows on `bootstrap`
       ARCHITECTURE.md        # tmux layout, team mode, MCP notes
       agent-feedback.jsonl   # aggregated PM ratings for registry agents
       .mcp.recommended.json  # template; copy to .mcp.json on first clone
@@ -102,7 +101,7 @@ own config.
 2. Start Lilo with the launch command above.
 3. First prompt: `bootstrap`.
 
-Lilo reads [`BOOTSTRAP.md`](BOOTSTRAP.md) and walks you through `.mcp.json` (copies
+The [`bootstrap`](.claude/skills/bootstrap/) skill walks you through `.mcp.json` (copies
 [`.mcp.recommended.json`](.mcp.recommended.json)), the tools-bridge venv, `USER.md`, optional
 platform MCPs (`ios-simulator` on macOS), Telegram setup, and an
 optional smoke-test project. The supported minimum is zero servers —
@@ -131,7 +130,7 @@ registered tool action before falling back to writing custom logic.
 
 | Skill | Phrase | What it does |
 |-------|--------|--------------|
-| `bootstrap` | `bootstrap` | First-run setup (script: [`BOOTSTRAP.md`](BOOTSTRAP.md)) |
+| [`bootstrap`](.claude/skills/bootstrap/) | `bootstrap` | First-run setup walkthrough |
 | [`new-project`](.claude/skills/new-project/) | `new project <name>` | Scaffolds a sibling, auto-launches PM tmux. `--profile mvp\|work` picks an overlay. |
 | [`pm`](.claude/skills/pm/) | `pm`, `pm start X`, `pm stop X` | Status, or start/stop a PM tmux session |
 | [`sync`](.claude/skills/sync/) | `sync` | Sweep outboxes, refresh dashboard if anything queued |

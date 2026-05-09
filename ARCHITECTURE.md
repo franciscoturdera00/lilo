@@ -52,14 +52,13 @@ operator per the routing rules in `CLAUDE.md`.
       CLAUDE.md              # Lilo's operating manual (imports @USER.md)
       USER.md.example        # committed operator-profile template
       USER.md                # gitignored — the actual operator profile
-      BOOTSTRAP.md           # first-run script Lilo follows when operator says `bootstrap`
       ARCHITECTURE.md        # this file
       README.md              # repo map + setup notes
       agent-feedback.jsonl   # aggregated PM agent ratings
       .mcp.recommended.json  # template; copy to .mcp.json on first clone
       .claude/
-        settings.json        # permissions + UserPromptSubmit startup hook
-        skills/              # new-project, nuke-project, pm, team-ops, toolify
+        settings.json        # permissions allowlist
+        skills/              # bootstrap, new-project, nuke-project, pm, team-ops, sweep, pipeline, sync, poll, toolify, find-agent, kill
       templates/
         team/                # PM scaffold with .claude/agent-registry/
       tools/                 # MCP bridge, framework lib, registry
@@ -75,7 +74,7 @@ Intent matching lives in the skill descriptions (`.claude/skills/<name>/SKILL.md
 | `pm start <name>` | `pm` | Launch the PM tmux session for an existing project |
 | `pm stop <name>` | `pm` | Kill a PM tmux session (state persists, resume with `pm start`) |
 | `nuke <name>` | `nuke-project` | Kill session and delete project files (confirms first) |
-| `bootstrap` | (reads `BOOTSTRAP.md`) | First-run setup walkthrough |
+| `bootstrap` | `bootstrap` | First-run setup walkthrough |
 
 ## Key behaviors
 
