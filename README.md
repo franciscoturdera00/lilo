@@ -21,7 +21,7 @@ mirrors live project status.
 - [Repo contents](#repo-contents)
 - [Running Lilo](#running-lilo)
 - [First run](#first-run)
-- [Operator commands](#operator-commands)
+- [Operator skills](#operator-skills)
 - [Communication](#communication)
 - [Tool registry](#tool-registry)
 - [Agent registry](#agent-registry)
@@ -55,7 +55,7 @@ lives inside it.
         agents/              # Lilo's curated subagents (incl. orchestrator-only
                              # outbox-sweeper + pipeline-syncer haiku workers)
         settings.json        # permissions
-        skills/              # see Operator commands
+        skills/              # see Operator skills
       templates/
         team/                # PM scaffold: agent-registry, agents/, skills/, CLAUDE.md
 
@@ -117,7 +117,7 @@ the troubleshooting move if messages aren't getting through.
 smoke-test` scaffolds and launches a PM in tmux; `nuke smoke-test`
 cleans up.
 
-## Operator commands
+## Operator skills
 
 Natural-language. Intent routing lives in the skill descriptions under
 [`.claude/skills/`](.claude/skills/) — just say what you want. Anything actionable that
