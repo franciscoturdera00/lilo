@@ -119,10 +119,12 @@ cleans up.
 
 ## Operator skills
 
-Natural-language. Intent routing lives in the skill descriptions under
-[`.claude/skills/`](.claude/skills/) — just say what you want. Anything actionable that
-isn't a management skill: Lilo checks the `claude-universe-tools` MCP
-for a registered tool action before writing custom logic.
+Skills are Lilo's operator interface. Invocation is natural language.
+Claude Code's intent router matches your prompt against the SKILL.md
+descriptions in [`.claude/skills/`](.claude/skills/) and dispatches the
+matching skill. For any actionable request that isn't a management
+skill, Lilo first queries the `claude-universe-tools` MCP for a
+registered tool action before falling back to writing custom logic.
 
 | Skill | Phrase | What it does |
 |-------|--------|--------------|
