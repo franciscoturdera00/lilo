@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
-# Render orchestrator/pipeline.md and orchestrator/pipeline.json from the
-# current state of every sibling project in claude-universe/. Idempotent.
+# Render pipeline.md and pipeline.json at the lilo repo root from the
+# current state of every sibling project in the workspace. Idempotent.
 # pipeline.json is the structured source for the Notion upsert loop;
 # pipeline.md is the human-readable mirror for terminal inspection.
 
 set -euo pipefail
 
 # Resolve paths relative to the script's own location so the script works
-# regardless of caller cwd. Layout: orchestrator/.claude/skills/sync/
+# regardless of caller cwd. Layout: <repo>/.claude/skills/sync/
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ORCHESTRATOR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-ROOT="$(cd "$ORCHESTRATOR/.." && pwd)"
-OUT_MD="$ORCHESTRATOR/pipeline.md"
-OUT_JSON="$ORCHESTRATOR/pipeline.json"
+LILO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+ROOT="$(cd "$LILO_ROOT/.." && pwd)"
+OUT_MD="$LILO_ROOT/pipeline.md"
+OUT_JSON="$LILO_ROOT/pipeline.json"
 
 LIVE_SESSIONS="$(tmux ls 2>/dev/null | cut -d: -f1 | sort -u || true)"
 
@@ -21,7 +21,7 @@ declare -a active=() paused=() done_p=() no_state=()
 for dir in "$ROOT"/*/; do
   name="$(basename "$dir")"
   case "$name" in
-    orchestrator|scratchpad|logs|tools) continue ;;
+    lilo|orchestrator|scratchpad|logs|tools) continue ;;
   esac
   state="$dir.team-state.json"
   if [[ ! -f "$state" ]]; then
@@ -91,7 +91,7 @@ render_project_md() {
 
 recent_outbox_md() {
   find "$ROOT" -mindepth 4 -maxdepth 4 -path "*/.lilo-outbox/processed/*.json" \
-    -not -path "*/orchestrator/*" 2>/dev/null \
+    -not -path "$LILO_ROOT/*" 2>/dev/null \
     | xargs -I{} stat -f "%m %N" {} 2>/dev/null \
     | sort -rn \
     | head -5 \
@@ -208,7 +208,7 @@ project_json() {
 
 recent_outbox_json() {
   find "$ROOT" -mindepth 4 -maxdepth 4 -path "*/.lilo-outbox/processed/*.json" \
-    -not -path "*/orchestrator/*" 2>/dev/null \
+    -not -path "$LILO_ROOT/*" 2>/dev/null \
     | xargs -I{} stat -f "%m %N" {} 2>/dev/null \
     | sort -rn \
     | head -10 \

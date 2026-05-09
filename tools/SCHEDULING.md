@@ -56,14 +56,14 @@ The `schedule` field in `registry.json` is informational only:
 
 ## Example: Scheduling a tool with launchd
 
-1. Create `~/Library/LaunchAgents/com.claude-universe.my-tool.plist`:
+1. Create `~/Library/LaunchAgents/com.lilo.my-tool.plist`:
    ```xml
    <?xml version="1.0" encoding="UTF-8"?>
    <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
    <plist version="1.0">
    <dict>
        <key>Label</key>
-       <string>com.claude-universe.my-tool</string>
+       <string>com.lilo.my-tool</string>
        <key>ProgramArguments</key>
        <array>
            <string>/path/to/python</string>
@@ -84,7 +84,7 @@ The `schedule` field in `registry.json` is informational only:
 
 2. Load the agent:
    ```bash
-   launchctl load ~/Library/LaunchAgents/com.claude-universe.my-tool.plist
+   launchctl load ~/Library/LaunchAgents/com.lilo.my-tool.plist
    ```
 
 ## Example: Scheduling with Claude Code `schedule` skill

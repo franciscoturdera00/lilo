@@ -1,7 +1,7 @@
 {
   "_note": "Recommended starting point for .mcp.json (gitignored). Minimum: zero project-local MCP servers — Lilo is fully operational with an empty file (or none), it just loses the registered-tool bridge and headless browser automation. Two Lilo-expected integrations are NOT configurable here: (1) Claude-in-Chrome, enabled via --chrome at launch; (2) account-level connectors (Notion, Telegram, Gmail, Calendar, HubSpot, etc.) configured in Claude Code app settings and inherited automatically by every session.",
   "mcpServers": {
-    "claude-universe-tools": {
+    "lilo-tools": {
       "command": "./tools/mcp-bridge/.venv/bin/python",
       "args": [
         "./tools/mcp-bridge/server.py"

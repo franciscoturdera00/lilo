@@ -32,18 +32,19 @@ mirrors live project status.
 
 ## Layout
 
-Scaffolded projects are **siblings** of this repo. The tools framework
-lives inside it.
+Drop this repo into the directory where you keep your Claude Code
+projects. Lilo's siblings are her projects. The tools framework lives
+inside this repo.
 
-    claude-universe/
-      orchestrator/        <- this repo (Lilo runs here)
+    <your-workspace>/
+      lilo/                <- this repo (Lilo runs here)
         tools/             <- MCP tools bridge + registry (in-repo)
       my-project/          <- ../my-project/
       another-project/     <- ../another-project/
 
 ## Repo contents
 
-    orchestrator/
+    lilo/
       CLAUDE.md              # Lilo's operating manual (imports @USER.md)
       USER.md.example        # template for the operator profile
       USER.md                # gitignored — created during `bootstrap`
@@ -87,7 +88,7 @@ Wrap in tmux for persistence:
 tmux new -s lilo "caffeinate -is claude --channels plugin:telegram@claude-plugins-official --chrome"
 ```
 
-**MCPs Lilo uses:** `claude-universe-tools` and `playwright` (both in
+**MCPs Lilo uses:** `lilo-tools` and `playwright` (both in
 `.mcp.json` — see [`.mcp.recommended.json`](.mcp.recommended.json)),
 `telegram` (from `--channels`), `claude-in-chrome` (from `--chrome`).
 Account-level MCPs (Notion, Figma, Gmail, etc.) come from Claude Code's
@@ -95,7 +96,9 @@ own config.
 
 ## First run
 
-1. Clone into `<workspace>/claude-universe/orchestrator/`.
+1. Clone into the directory where you keep your projects (so the repo
+   sits as `<your-workspace>/lilo/`, with future scaffolded projects as
+   its siblings).
 2. Start Lilo with the launch command above.
 3. First prompt: `bootstrap`.
 
@@ -123,7 +126,7 @@ Skills are Lilo's operator interface. Invocation is natural language.
 Claude Code's intent router matches your prompt against the SKILL.md
 descriptions in [`.claude/skills/`](.claude/skills/) and dispatches the
 matching skill. For any actionable request that isn't a management
-skill, Lilo first queries the `claude-universe-tools` MCP for a
+skill, Lilo first queries the `lilo-tools` MCP for a
 registered tool action before falling back to writing custom logic.
 
 | Skill | Phrase | What it does |

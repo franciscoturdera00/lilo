@@ -2,19 +2,18 @@
 
 ## Layout
 
-This repo is the orchestrator. It expects to live inside a shared
-`claude-universe/` workspace directory, alongside every scaffolded
-project. The tools framework lives inside this repo:
+This repo is the orchestrator. Drop it into the directory where you
+keep your Claude Code projects — every scaffolded project will sit as
+a sibling. The tools framework lives inside this repo:
 
-    claude-universe/
-      orchestrator/        <- this repo (Lilo runs here)
+    <your-workspace>/
+      lilo/                <- this repo (Lilo runs here)
         tools/             <- MCP tools bridge + registry (in-repo)
       <project-a>/         <- scaffolded project
       <project-b>/         <- scaffolded project
 
-All internal references use paths relative to the orchestrator repo
-root. Sibling projects are `../<name>/`; the tools framework is
-`./tools/`.
+All internal references use paths relative to the lilo repo root.
+Sibling projects are `../<name>/`; the tools framework is `./tools/`.
 
 ## Project mode
 
@@ -49,7 +48,7 @@ operator per the routing rules in `CLAUDE.md`.
 
 ## Repo contents
 
-    orchestrator/
+    lilo/
       CLAUDE.md              # Lilo's operating manual (imports @USER.md)
       USER.md.example        # committed operator-profile template
       USER.md                # gitignored — the actual operator profile

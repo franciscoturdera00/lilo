@@ -10,7 +10,7 @@ Skip steps that are already done (e.g. if `USER.md` exists and looks filled in, 
 
 Three gitignored templates the operator needs locally. Check and create if missing:
 
-1. `.mcp.json` — Lilo is fully operational with zero project-local MCP servers, so an empty file (or none at all) is the supported **minimum**. The committed `.mcp.recommended.json` is the **recommended** starting point: it wires `claude-universe-tools` (so registered tools are callable) and `playwright` (headless browser fallback). Copy it on first clone:
+1. `.mcp.json` — Lilo is fully operational with zero project-local MCP servers, so an empty file (or none at all) is the supported **minimum**. The committed `.mcp.recommended.json` is the **recommended** starting point: it wires `lilo-tools` (so registered tools are callable) and `playwright` (headless browser fallback). Copy it on first clone:
 
    ```bash
    [ -f .mcp.json ] || cp .mcp.recommended.json .mcp.json
@@ -81,7 +81,7 @@ Install pointer: the Supabase MCP is an account-level integration — the operat
 
 Already wired into this repo's `.mcp.json`. Mention that it's available for headless browser automation when the Chrome extension isn't the right fit — the operator does not need to do anything.
 
-Also mention the `claude-in-chrome` extension (DOM-aware browser automation) and the custom `claude-universe-tools` bridge — both are covered elsewhere but worth a one-line callout so the operator knows what's on deck.
+Also mention the `claude-in-chrome` extension (DOM-aware browser automation) and the custom `lilo-tools` bridge — both are covered elsewhere but worth a one-line callout so the operator knows what's on deck.
 
 ---
 

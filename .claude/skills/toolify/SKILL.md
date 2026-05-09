@@ -1,6 +1,6 @@
 ---
 name: toolify
-description: Package a claude-universe project into the tools framework so it's callable via the custom MCP bridge. Use when the operator says to toolify a project or asks to expose a project as a tool.
+description: Package a sibling project into the tools framework so it's callable via the custom MCP bridge. Use when the operator says to toolify a project or asks to expose a project as a tool.
 ---
 
 # toolify

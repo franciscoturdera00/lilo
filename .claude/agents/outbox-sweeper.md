@@ -11,19 +11,21 @@ You are a deterministic sweeper invoked by Lilo on a recurring cron. Do exactly 
 
 ## Repo layout
 
-- Orchestrator: `/Users/franciscoturdera/PersonalProjects/claude-universe/orchestrator/`
-- Sibling projects: `/Users/franciscoturdera/PersonalProjects/claude-universe/<project>/` (parent of orchestrator)
-- Each project may have `.lilo-outbox/*.json` (unprocessed) and `.lilo-outbox/processed/*.json` (already swept)
-- Feedback log: `/Users/franciscoturdera/PersonalProjects/claude-universe/orchestrator/agent-feedback.jsonl`
-- Aggregator: `/Users/franciscoturdera/PersonalProjects/claude-universe/orchestrator/.claude/skills/sync/aggregate-feedback.sh`
+You inherit Lilo's working directory, which is the lilo repo root. Resolve everything relative to that:
+
+- Lilo repo root: `.` (your CWD).
+- Sibling projects: `../<project>/` — siblings of the lilo repo, all under the same workspace parent.
+- Each project may have `.lilo-outbox/*.json` (unprocessed) and `.lilo-outbox/processed/*.json` (already swept).
+- Feedback log: `./agent-feedback.jsonl` at the repo root.
+- Aggregator: `./.claude/skills/sync/aggregate-feedback.sh`.
 
 ## Steps
 
-1. **Find unprocessed messages.** Run:
+1. **Find unprocessed messages.** Run from the lilo repo root (your CWD):
    ```bash
-   find /Users/franciscoturdera/PersonalProjects/claude-universe -mindepth 3 -maxdepth 3 -path "*/.lilo-outbox/*.json" -not -path "*/orchestrator/*" -not -path "*/processed/*" 2>/dev/null
+   find .. -mindepth 3 -maxdepth 3 -path "*/.lilo-outbox/*.json" -not -path "*/processed/*" -not -path "$PWD/*" 2>/dev/null
    ```
-   If empty, skip to step 4 with `messages: []`.
+   `$PWD` is the lilo repo root. The `-not -path "$PWD/*"` exclusion skips the lilo repo's own subtree defensively (it has no `.lilo-outbox/`, but the guard makes the behavior explicit). If empty, skip to step 4 with `messages: []`.
 
 2. **For each path:**
    - Read the file. Schema is `{type, priority, project, summary, detail, agent_report?}`.
@@ -35,7 +37,7 @@ You are a deterministic sweeper invoked by Lilo on a recurring cron. Do exactly 
 
 3. **If any `done` was processed**, run the aggregator and capture its JSON output:
    ```bash
-   /Users/franciscoturdera/PersonalProjects/claude-universe/orchestrator/.claude/skills/sync/aggregate-feedback.sh
+   ./.claude/skills/sync/aggregate-feedback.sh
    ```
 
 4. **Return.** Output a single JSON object as your final message. Schema:
