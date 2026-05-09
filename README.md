@@ -1,4 +1,4 @@
-# orchestrator (Lilo)
+# Lilo (Orchestrator)
 
 **Lilo** is a long-running Claude Code session that encapsulates and
 manages your projects under a standardized framework. Each project
