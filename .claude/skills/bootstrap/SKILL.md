@@ -100,10 +100,32 @@ Also mention the `claude-in-chrome` extension (DOM-aware browser automation) and
 
 Only run this step if the operator said yes in Step 1. Otherwise skip.
 
-1. **Plugin channel.** The launch command in `README.md` already includes `--channels plugin:telegram@claude-plugins-official`. Confirm the operator is using that launch line — if not, suggest they restart with it.
-2. **Create a bot.** Tell the operator to open Telegram, DM `@BotFather`, run `/newbot`, and follow the prompts. BotFather returns an HTTP API token. Have them copy it.
-3. **Configure the bot.** Run `/telegram:configure` inside this session, paste the token when prompted, and set the access policy.
-4. **Find the `chat_id`.** Ask the operator to send a message to their new bot from Telegram. When the inbound message arrives in this session, the `chat_id` will be in the `<channel>` tag. Write that value back into `USER.md` under "Telegram chat_id" so you can proactively DM them.
+The plugin's MCP server runs on **Bun**, and the plugin itself has to be installed inside the current Claude Code session before `/telegram:configure` and `/telegram:access` become available. Lilo cannot invoke `/plugin install` or `/reload-plugins` — the operator types them.
+
+1. **Bun (host prereq).** Check with `command -v bun`. If missing, tell the operator to install it in another terminal:
+   ```bash
+   curl -fsSL https://bun.sh/install | bash
+   ```
+   Wait for confirmation before continuing. Re-check with `command -v bun` if unsure.
+
+2. **Install the plugin.** Have the operator run these slash commands in this session, in order:
+   ```
+   /plugin install telegram@claude-plugins-official
+   /reload-plugins
+   ```
+   After `/reload-plugins`, `/telegram:configure` and `/telegram:access` become callable.
+
+3. **Create a bot.** Tell the operator to open Telegram, DM `@BotFather`, run `/newbot`, and follow the prompts. BotFather returns an HTTP API token (looks like `123456789:AAHfiqksKZ8...`). Have them copy it.
+
+4. **Configure the bot.** Have the operator run `/telegram:configure <token>` in this session. That writes `TELEGRAM_BOT_TOKEN` to `~/.claude/channels/telegram/.env`.
+
+5. **Relaunch with the channel flag.** The bot won't connect until the session is launched with `--channels plugin:telegram@claude-plugins-official` (already in `README.md`'s launch line). If the current session is missing the flag, the operator must exit and restart using the full launch command from the README.
+
+6. **Pair.** Once relaunched, the operator DMs the bot. The bot replies with a 6-character pairing code. They run `/telegram:access pair <code>` in this session.
+
+7. **Find the `chat_id`.** With pairing complete, ask the operator to send another message to the bot. When the inbound message arrives in this session, the `chat_id` is in the `<channel>` tag — write it into `USER.md` under "Telegram chat_id" so Lilo can DM proactively.
+
+8. **Lock it down.** Pairing is for capturing IDs; once paired, switch the policy so strangers can't trigger pairing-code replies: `/telegram:access policy allowlist`.
 
 ---
 
