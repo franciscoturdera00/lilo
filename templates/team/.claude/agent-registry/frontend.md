@@ -60,7 +60,9 @@ Applies to any project that ships a `package.json`.
 
 - Mobile is the real experience. Design mobile first, expand up
 - Every interactive element needs a hover state, a focus state, and a disabled state
+- Tap targets are at least 44×44 CSS pixels on any touch-capable breakpoint. If the visible icon is smaller, pad with `p-*` so the bounding rect hits the minimum
 - Animation is a tool for affordance, not decoration. Every animation should tell the user something
+- Animated lists (`AnimatePresence`, motion variants over arrays, any enter/exit transition over a collection) need stable `key` props on direct children. Missing keys produce silent animation glitches and React warnings
 - Contrast ratios must hit WCAG AA. Check, do not guess
 - Phone numbers are `tel:` links, emails are `mailto:` links, always
 
@@ -81,6 +83,8 @@ Numeric Tailwind classes are a common bug source when a project uses named spaci
 - Tailwind's default `h-40` is `10rem = 160px`, not `40px`. Tailwind's default `w-28` is `7rem = 112px`, not `28px`. If you mean exact pixels, use brackets.
 - Verify with the rendered output, not the diff alone — broken Tailwind classes silently render at unexpected sizes.
 - For semantic color classes (e.g. `border-alpha-light-50`, `text-action-primary`), check that the name is actually in `tailwind.config.ts`'s `theme.extend.colors`. Token aliases declared in a `tokens.json` (e.g. `semantic.border.subtle: color.alpha.light.50`) do NOT auto-resolve into Tailwind class names. If you need a token-driven semantic color, either add it to `tailwind.config.ts` or use an arbitrary value (`border-[rgba(0,0,0,0.06)]`).
+- **Prefer tokens over arbitrary values.** If the project defines a token at the value you need (`rounded-8`, `space-card-pad`, `text-body-3`), use the token — not the arbitrary equivalent (`rounded-[8px]`). Reviewers will flag arbitrary values when a matching token exists. Arbitrary values are the fallback when no token matches, not the default.
+- **`tailwind-merge` / `cn()` precedence is last-write-wins per property family.** Passing both a typography token (`text-body-3`, which sets fontSize) and a color (`text-cerulean-600`) into the same `cn()` call can silently drop the typography token — both are `text-*` and `tailwind-merge` keeps the rightmost one. If you compose typography tokens with color classes, verify the final `font-size` with `getComputedStyle` in the Chrome MCP before declaring done.
 
 ## Live verification with the Chrome MCP
 
@@ -124,12 +128,14 @@ The Chrome MCP gives you computed styles + bounding rects in seconds. Use it bef
 - Works and looks correct at 375px, 768px, 1280px
 - No console errors or warnings
 - All interactive elements have hover/focus states
+- Tap targets are at least 44×44 CSS pixels at mobile width
 - Accessible: keyboard-navigable, alt text on images, correct heading hierarchy
+- Typecheck and lint both exit 0 (a `FAIL` in `VERIFIED_VIA` means you are not done)
 - Ships as a single deployable unit (one HTML file, or a built `dist/`)
 
 ## Required output checklist (for the message you send back to PM)
 
-**This is non-optional.** A "done" message that omits any of these will be rejected and re-dispatched. Code-correctness checks (typecheck/lint/test/e2e) confirm the code is valid. They do NOT confirm the page looks right. Add this block to your final message:
+**This is non-optional.** A "done" message that omits any of these will be rejected and re-dispatched. Code-correctness checks (typecheck/lint/test/e2e) confirm the code is valid. They do NOT confirm the page looks right. If `typecheck` or `lint` reports `FAIL` in the block below, you are not done — fix the cause and re-verify before sending the message. Add this block to your final message:
 
 ```
 VERIFIED_VIA:
