@@ -21,7 +21,7 @@ declare -a active=() paused=() done_p=() no_state=()
 for dir in "$ROOT"/*/; do
   name="$(basename "$dir")"
   case "$name" in
-    lilo|orchestrator|scratchpad|logs|tools) continue ;;
+    lilo|orchestrator|scratchpad|logs|tools|vault) continue ;;
   esac
   state="$dir.team-state.json"
   if [[ ! -f "$state" ]]; then
