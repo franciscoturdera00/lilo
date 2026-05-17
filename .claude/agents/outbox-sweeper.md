@@ -34,7 +34,7 @@ You inherit Lilo's working directory, which is the lilo repo root. Resolve every
      mkdir -p "<project>/.lilo-outbox/processed/" && mv "<path>" "<project>/.lilo-outbox/processed/"
      ```
    - **(step 2b)** Run `./scripts/mirror-outbox-to-vault.sh "<archived-path>"` to mirror the message to the vault as markdown. On non-zero exit, append `"mirror failed for <archived-path>: <stderr>"` to `errors[]`, but do NOT block further processing.
-   - If `type == "done"` and `agent_report` is a non-empty array, append each rating to `agent-feedback.jsonl` as one JSON line per entry. Schema: `{"project": "<name>", "timestamp": "<ISO-now>", "agent": "<name>", "rating": "<canonical>", "notes": "<text>"}`. **Canonical ratings are `poor`, `adequate`, `effective` only** — if the PM wrote anything else, normalize it (numbers >=5 → effective, 3-4 → adequate, <=2 → poor; `good`/`excellent` → effective; `not-used` → drop the entry; anything unrecognized → drop).
+   - If `type == "done"` and `agent_report` is a non-empty array, for each rating: normalize the `rating` field to canonical, append one JSON line to `agent-feedback.jsonl`, **and pipe the same canonical rating object into `./scripts/mirror-feedback-to-vault.sh`** so the vault stays in sync. Mirror failures go into `errors[]`. Schema: `{"project": "<name>", "timestamp": "<ISO-now>", "agent": "<name>", "rating": "<canonical>", "notes": "<text>"}`. **Canonical ratings are `poor`, `adequate`, `effective` only** — if the PM wrote anything else, normalize it (numbers >=5 → effective, 3-4 → adequate, <=2 → poor; `good`/`excellent` → effective; `not-used` → drop the entry; anything unrecognized → drop).
 
 3. **If any `done` was processed**, run the aggregator and capture its JSON output:
    ```bash
