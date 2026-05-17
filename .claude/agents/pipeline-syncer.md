@@ -30,6 +30,16 @@ From the lilo repo root:
 
 If non-zero exit, return `{"calls_made": 0, "errors": ["render failed: <stderr>"]}` and stop.
 
+### 1.5. Mirror to vault
+
+After `render-pipeline.sh` succeeds, also run:
+
+```bash
+./scripts/render-pipeline-vault.sh
+```
+
+If non-zero exit, append the stderr to `errors[]` but do NOT abort the sync — the vault mirror is best-effort, Notion sync remains the primary contract.
+
 ### 2. Read state
 
 Read `pipeline.json` and `pipeline-config.json` (both at the repo root). From config: `data_source_id`, `notion_page_id`, `project_rows`, `parent_fingerprint`. From pipeline: `snapshot`, `projects`, `recent_activity`.
