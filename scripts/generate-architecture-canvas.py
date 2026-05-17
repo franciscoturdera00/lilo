@@ -29,8 +29,8 @@ NODE_W = 260
 NODE_H = 92
 ROW_PITCH = 170
 GROUP_PAD = 60
-LILO_W = 460
-LILO_H = 160
+LILO_W = 520
+LILO_H = 220
 
 # Cluster x-lanes (disjoint, with breathing room for group padding)
 PM_X      = [-1180, -880, -580]          # 3 columns
@@ -45,13 +45,18 @@ LABEL_Y = 200                             # category label band
 # ─── Source readers ───────────────────────────────────────────────────
 
 def scan_registry():
-    """Return sorted list of (name, description) tuples for PM specialists."""
+    """Return sorted list of (name, description) tuples for PM specialists.
+
+    Excludes README.md, placeholder/test specs, and agents that are also
+    in the orchestrator-only cluster (to avoid duplicates).
+    """
     registry_dir = Path("templates/team/.claude/agent-registry")
+    excluded = {"README.md", "test.md", "stitch-operator.md"}
     agents = []
     if not registry_dir.exists():
         return agents
     for md in sorted(registry_dir.glob("*.md")):
-        if md.name == "README.md":
+        if md.name in excluded:
             continue
         agents.append((md.stem, ""))
     return agents
@@ -305,25 +310,9 @@ def build_canvas():
             "toNode": project_group_id, "toSide": "top", "label": "tracks"
         })
 
-    # ─── Signature MCP↔specialist edges (sparse, illustrative) ───
-
-    def link_mcp(mcp_name, specialist_name, label):
-        if mcp_name in mcp_ids and specialist_name in {**pm_agent_ids, **orch_agent_ids}:
-            target = pm_agent_ids.get(specialist_name) or orch_agent_ids.get(specialist_name)
-            edges.append({
-                "id": nid(),
-                "fromNode": mcp_ids[mcp_name],
-                "fromSide": "left",
-                "toNode": target,
-                "toSide": "right",
-                "label": label,
-                "color": "3"
-            })
-
-    link_mcp("picarx", "stitch-operator", "drives")
-    link_mcp("ios-simulator", "ios-sim-driver", "drives")
-    link_mcp("playwright", "scraper", "drives")
-    link_mcp("playwright", "frontend", "previews")
+    # Note: cross-cluster MCP→specialist edges removed — they crossed the
+    # whole canvas diagonally and added more noise than signal. Operator
+    # can draw them manually in Obsidian if a specific relationship matters.
 
     return {"nodes": nodes, "edges": edges}
 
