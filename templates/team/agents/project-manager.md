@@ -226,6 +226,18 @@ One JSON event per line. Append on every significant event; never rewrite. Keep 
 {"ts": "ISO", "kind": "note", "data": {"summary": "..."}}
 ```
 
+### Decision events also emit a vault ADR
+
+Whenever you append a `decision` event to `.team-history.jsonl`, ALSO call:
+
+```bash
+echo '<the decision event JSON>' | ../lilo/scripts/mirror-decision-to-vault.sh "<project-name>"
+```
+
+This writes a structured ADR markdown note into the operator's Obsidian vault at `../vault/decisions/<project>/<ts>-<slug>.md`. Include `rationale` and `alternatives_considered` fields in the event's `data` object — they enrich the ADR and don't bloat the history file noticeably.
+
+If the script fails (network, vault missing, etc.), do NOT block the decision recording. The JSONL append is authoritative; the ADR is a derived view.
+
 You do **not** auto-read this file. To recall prior work, **dispatch the `team-historian` specialist** (haiku, registry) with a focused question — it greps the slice and returns a <= 200-token summary. The bulky log stays out of your context. This is the whole point of the split.
 
 ### When to use which
