@@ -99,6 +99,23 @@ def build_canvas():
         "color": "5"  # cyan
     })
 
+    # Layout constants. Obsidian renders the file-node's title in grey
+    # ABOVE the card, which eats ~30px. Row pitch must comfortably exceed
+    # node height to keep titles from overlapping the row above.
+    NODE_W = 260
+    NODE_H = 90
+    ROW_PITCH = 170
+    COL_PITCH = 300
+    GRID_Y_START = 360
+
+    # Three non-overlapping x-lanes for the three clusters:
+    #   PM cluster: 3 cols wide   → x ∈ [-1000, -180]   (end = -180 + NODE_W = 80)
+    #   Orch cluster: 1 col wide  → x ∈ [180]
+    #   MCP cluster: 1 col wide   → x ∈ [560]
+    PM_X = [-1000, -700, -400]
+    ORCH_X = 180
+    MCP_X = 560
+
     # 2. Category labels at y=200
     pm_label_id = next_id()
     nodes.append({
@@ -107,7 +124,7 @@ def build_canvas():
         "text": "## PM Template\nSpecialists",
         "x": -700,
         "y": 200,
-        "width": 200,
+        "width": 240,
         "height": 80,
         "color": "4"  # green
     })
@@ -117,9 +134,9 @@ def build_canvas():
         "id": subagent_label_id,
         "type": "text",
         "text": "## Lilo's\nSubagents",
-        "x": -100,
+        "x": ORCH_X,
         "y": 200,
-        "width": 200,
+        "width": 240,
         "height": 80,
         "color": "2"  # orange
     })
@@ -129,9 +146,9 @@ def build_canvas():
         "id": mcp_label_id,
         "type": "text",
         "text": "## MCPs\n& Connectors",
-        "x": 500,
+        "x": MCP_X,
         "y": 200,
-        "width": 200,
+        "width": 240,
         "height": 80,
         "color": "3"  # yellow
     })
@@ -164,78 +181,53 @@ def build_canvas():
         "label": "uses"
     })
 
-    # 4. PM template specialists (grid layout)
+    # 4. PM template specialists (grid layout, 3 cols)
     registry_agents = scan_registry()
-    pm_x_positions = [-700, -460, -220]
-    pm_y_start = 320
-
     for idx, (name, desc) in enumerate(registry_agents):
         col = idx % 3
         row = idx // 3
-        x = pm_x_positions[col]
-        y = pm_y_start + (row * 100)
-
         node_id = next_id()
         nodes.append({
             "id": node_id,
             "type": "file",
             "file": f"agents/{name}.md",
-            "x": x,
-            "y": y,
-            "width": 240,
-            "height": 80,
+            "x": PM_X[col],
+            "y": GRID_Y_START + (row * ROW_PITCH),
+            "width": NODE_W,
+            "height": NODE_H,
             "color": "4"  # green
         })
 
-    # 5. Orchestrator-only subagents
+    # 5. Orchestrator-only subagents (single column, no overlap with PM grid)
     orch_agents = get_orchestrator_only_agents()
-    orch_x_positions = [-100, 140, 380]
-    orch_y_start = 320
-
     for idx, (name, desc) in enumerate(orch_agents):
-        col = idx % 3
-        row = idx // 3
-        x = orch_x_positions[col]
-        y = orch_y_start + (row * 100)
-
         node_id = next_id()
-        # These agents may not be in the vault's symlinked agents/ dir,
-        # so use text nodes with a note
         nodes.append({
             "id": node_id,
             "type": "text",
             "text": f"# {name}\norchestrator-only\n(see .claude/agents/)",
-            "x": x,
-            "y": y,
-            "width": 240,
-            "height": 80,
+            "x": ORCH_X,
+            "y": GRID_Y_START + (idx * ROW_PITCH),
+            "width": NODE_W,
+            "height": NODE_H + 20,  # slightly taller for the 3-line text
             "color": "2"  # orange
         })
 
-    # 6. MCPs
+    # 6. MCPs (single column, separate lane)
     mcps = get_mcps()
-    mcp_x_positions = [500, 740, 980]
-    mcp_y_start = 320
-
     for idx, (name, desc) in enumerate(mcps):
-        col = idx % 3
-        row = idx // 3
-        x = mcp_x_positions[col]
-        y = mcp_y_start + (row * 100)
-
-        node_id = next_id()
         text_content = f"# {name}"
         if desc:
             text_content += f"\n{desc}"
-
+        node_id = next_id()
         nodes.append({
             "id": node_id,
             "type": "text",
             "text": text_content,
-            "x": x,
-            "y": y,
-            "width": 240,
-            "height": 80,
+            "x": MCP_X,
+            "y": GRID_Y_START + (idx * ROW_PITCH),
+            "width": NODE_W,
+            "height": NODE_H,
             "color": "3"  # yellow
         })
 
