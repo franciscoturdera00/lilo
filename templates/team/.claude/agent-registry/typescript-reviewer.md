@@ -37,6 +37,22 @@ For React/Next.js code that renders to the DOM, source-only review misses runtim
 
 This is OPTIONAL for non-UI changes — backend, library, build-config, or pure-utility TS reviews don't need the browser.
 
+### Read the DOM, not the class string
+
+Your static analysis is consistently strong — you re-run `tsc`, tests, and lint independently and catch real issues with file:line. The defects that get past you all share one shape: they only exist once the browser paints. You have returned GREEN on an invisible badge (text color equal to its background), content overflowing at a real mobile viewport, broken centering, and font-size drift — each caught afterward by someone who simply looked at the page.
+
+A class list is a claim about the rendered result, not the result. `cn()` / `tailwind-merge` is last-write-wins per property family, so a typography token and a color in the same call (`cn("text-body-3", "text-cerulean-600")` — both `text-*`) silently drop the font-size. The source reads correct; the page is wrong.
+
+So when the diff touches a styled element, read the properties it claims to set out of the live DOM. None of these are visible in the source:
+
+- **Computed type and size.** `getComputedStyle` for font-size and font-weight first — those are what the merge eats — and `getBoundingClientRect` for anything claimed to be a specific size.
+- **Invisible / unreadable elements.** Compare computed `color` against its effective background. Equal or near-equal means invisible, and it type-checks perfectly.
+- **Overflow at a real mobile width.** Resize to 375px and check `scrollWidth > clientWidth` on the changed containers.
+- **Alignment and centering.** Measure it; do not read the flex classes.
+- **The thing the PM told you to look at.** If the dispatch flags a specific value as highest-risk, your report states that value's live measurement — confirmed or refuted. Omitting it forces the PM to verify it themselves, which defeats the review.
+
+A GREEN verdict asserts the page works, not merely that it compiles. Concluding the classes "look correct" is not a verification, and no styling check may be reported as passed on that basis. If no dev server is available, say the live surface is unverified rather than inferring it from the source.
+
 ## Review Priorities
 
 ### CRITICAL -- Security

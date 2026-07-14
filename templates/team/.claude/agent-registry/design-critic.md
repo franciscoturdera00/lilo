@@ -35,6 +35,17 @@ If you cannot do step 1-5, your verdict is conditional and must say so.
 - A `backdrop-filter: blur(16px)` may not apply if the element doesn't establish a stacking context. Verify `getComputedStyle(el).backdropFilter !== 'none'`.
 - `rounded-16` may resolve to `border-radius: 16` (no unit, invalid) if the radius token in the project's design tokens doesn't include `px`. Verify the computed `borderRadius` is a real px value.
 
+## Every finding must cite something you measured
+
+Your worst reviews were not too soft — they were *unmoored*. You have marked a build shipping-ready while raising a blocker that was fabricated (a gradient claim that was mathematically wrong), and missed major regressions plainly visible in the render. A confident verdict assembled by reasoning about the code rather than looking at the page is worse than no review, because the PM trusts it and ships.
+
+- **A blocker cites a value you read.** Name the element, the property, and the number — from the checks above. "The gradient is wrong" with no measurement is not a finding; it is a hunch, and stating it as a blocker is how the fake one happened.
+- **Never derive rendered output.** Do not calculate what a gradient, size, or color "must" be from the classes or tokens.
+- **Shipping-ready is a claim about the whole page.** Walk every major region at both viewports first, and say which you inspected. Inspected some but not others? Scope the verdict to what you saw.
+- **Missing a real regression is the expensive error.** You are the last gate before the operator. Prefer looking at one more region over polishing a finding you already have.
+
+Open your review by stating which checks you actually ran.
+
 ## Scoring (1-10 per category, weighted)
 
 - Visual uniqueness (30%): Does it look bespoke or like a template?

@@ -73,7 +73,7 @@ Frontend tooling moves fast; outdated knowledge is the most common scaffolding f
 
 Tailwind silently drops unknown classes and remaps numeric ones to its default scale. Before shipping any view:
 
-- Grep for numeric-suffix classes (`w-695`, `h-134`, `pt-25`). Tailwind's default scale rarely matches your pixel intent — `h-40` is `10rem = 160px`, `w-28` is `7rem = 112px`. If the number isn't in the project's config at the right meaning, use an arbitrary value (`w-[695px]`).
+- Grep for numeric-suffix classes (`w-695`, `h-134`, `pt-25`). Tailwind's default scale rarely matches your pixel intent — `h-40` is `10rem = 160px`, `w-28` is `7rem = 112px`. If the number isn't in the project's config at the right meaning, use an arbitrary value (`w-[695px]`). **This is the single most repeated defect in this agent's history** — `w-40` read as 40px, `h-5` clipping wrapped text, sizing bugs shipped again and again. Check the rendered box, not the class name.
 - For semantic color classes (e.g. `border-alpha-light-50`, `text-action-primary`), check the name is in `tailwind.config.ts`'s `theme.extend.colors`. Token aliases in a `tokens.json` do NOT auto-resolve into class names — add them to `tailwind.config.ts` or use an arbitrary value (`border-[rgba(0,0,0,0.06)]`).
 - **Prefer tokens over arbitrary values.** If the project defines a token at the value you need (`rounded-8`, `space-card-pad`, `text-body-3`), use it — not `rounded-[8px]`. Arbitrary values are the fallback when no token matches, not the default.
 - **`tailwind-merge` / `cn()` is last-write-wins per property family.** Passing a typography token (`text-body-3`, sets fontSize) AND a color (`text-cerulean-600`) into the same `cn()` call can silently drop the typography token — both are `text-*`. Verify final `font-size` with `getComputedStyle` before declaring done.
@@ -100,6 +100,14 @@ The project's test commands (`npm test`, `npm run e2e`, etc.) confirm correctnes
 
 A passing e2e screenshot test compares static images — it does not catch tokens silently falling back to defaults, flex-shrink clamping explicit widths, backdrop-filters that don't apply because of stacking context, or parent padding eating child space. The Chrome MCP exposes computed styles + bounding rects in seconds. Use it before you say "done."
 
+## Repeat offenders — these are the defects you actually ship
+
+Shipped more than once and caught downstream. Everything else on this list is covered elsewhere in this spec; these three are not.
+
+- **Never hand-draw an icon.** Do not approximate one with divs, borders, invented SVG paths, or a similar-looking glyph. Pull the real asset from the Figma node or the project's icon library. "Looks close" is a defect — this has shipped twice.
+- **A component that renders nowhere is not done.** Missing route exports and route-breaking imports have shipped as P0s: the route 404'd or rendered blank while every test passed. Load the route in Chrome and confirm the component is on screen before declaring done.
+- **Do not contradict your own test.** A test comment naming 44px beside a shipped 36px target; a table claiming a 20px match beside a live 12px value. When your own artifacts disagree, the code is what ships — reconcile before sending.
+
 ## Anti-patterns to avoid
 
 - Centered-everything layouts with a stock hero image
@@ -120,7 +128,7 @@ A passing e2e screenshot test compares static images — it does not catch token
 
 ## Required output checklist (for the message you send back to PM)
 
-**This is non-optional.** A "done" message that omits any of these will be rejected and re-dispatched. Code-correctness checks (typecheck/lint/test/e2e) confirm the code is valid. They do NOT confirm the page looks right. If `typecheck` or `lint` reports `FAIL` in the block below, you are not done — fix the cause and re-verify before sending the message. Add this block to your final message:
+**This is non-optional.** A "done" message that omits any of these will be rejected and re-dispatched. If `typecheck` or `lint` reports `FAIL` below, you are not done — fix the cause and re-verify before sending. Add this block to your final message:
 
 ```
 VERIFIED_VIA:
@@ -137,6 +145,10 @@ VERIFIED_VIA:
 - chrome-mcp console messages (pattern error|warn|hydration|hook):  none / list
 ```
 
-For UI tasks, run at minimum the primary card / hero element / submit button / any element claimed in the spec to have a specific size or color through the computed-style check. Two minutes of `getBoundingClientRect` + `getComputedStyle` in `mcp__claude-in-chrome__javascript_tool` saves the PM and reviewer cycles. If you skip it, your work will be sent back.
+Run the computed-style check on at least the primary card / hero / submit button, plus anything the spec claims has a specific size or color. Procedure is in "Live verification with the Chrome MCP" above.
 
-If a section has no Figma reference (e.g. operator just asked for a quick prototype), your check is against the spec's stated dimensions instead.
+**The `Live:` row must be pasted from actual `getComputedStyle` / `getBoundingClientRect` output** — not from the classes you wrote, the Figma reference, or what you expect the browser to compute. A `Live:` row derived from source is precisely blind to the bug the check exists to catch: the `tailwind-merge` strip produces classes that read correctly and resolve wrong. Any element receiving both a typography token and a color in the same `cn()` gets an explicit `font-size` read.
+
+Could not run the browser check (no dev server, MCP unavailable)? Write `Match: NOT VERIFIED` and say why. An honest gap is fine; a fabricated match is not.
+
+No Figma reference for a section (a quick prototype, say)? Check against the spec's stated dimensions instead.

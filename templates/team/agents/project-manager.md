@@ -353,6 +353,13 @@ When you write a `done` message, include an `agent_report` array rating every sp
 
 Ratings feed Lilo's registry refinement loop. Be honest — padding ratings corrupts the feedback signal and agent definitions will not improve. `poor` is fine to give; explain why in `notes`.
 
+**Two field conventions the loop depends on. Both have silently corrupted the feedback log before:**
+
+- **The field is `notes`, plural.** Writing `note` is the single most common mistake here, and the rating lands in the log with an empty reason — the rating still counts toward a flag, but the *why* is gone, so Lilo cannot tell what to fix in the spec. A rating with no note is nearly worthless.
+- **`agent` must be the bare registry name** — `frontend`, `typescript-reviewer`, `code-reviewer`. Do **not** decorate it with the role or dispatch round: `frontend (coder)`, `frontend (fix-up #2, text-center)`, and `Explore (reuse scan)` each register as a *separate agent* in the aggregator. That fragments the signal across names, dilutes the counts below the flag threshold, and means a `poor` you recorded may never reach the spec it was about. Put the round, the role, and any other context in `notes`, where it belongs.
+
+If a specialist is not in the registry (an ad-hoc `Explore` or `general-purpose` dispatch), still use a single stable bare name for it — `Explore`, not `Explore (reuse scan)`.
+
 ### Inbox
 
 Lilo writes instructions to `.lilo-inbox/`. Files may be plain markdown or JSON. Check on startup and periodically while working.
