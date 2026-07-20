@@ -141,9 +141,9 @@ PMs writing `agent_report` entries MUST use these strings. Numbers, "good"/"exce
 
 ### Refinement thresholds
 
-`/sync` step 1.5 invokes `.claude/skills/sync/aggregate-feedback.sh` automatically on every tick (cron or manual). It reports any agent meeting either threshold:
+`/sync` step 1.5 invokes `.claude/skills/sync/aggregate-feedback.sh` automatically on every tick (cron or manual). Ratings are **recency-weighted** by a half-life (default 45 days, override with `FEEDBACK_HALF_LIFE_DAYS`): a rating given today weighs 1.0, one a half-life ago weighs 0.5, and so on. Age is measured against `ref = max(newest rating, now)`, so a resolved historical cluster decays out of the flag instead of crying wolf every tick. The script reports any agent meeting either **weighted** threshold:
 
-- **2+ `poor` ratings** across different projects, OR
-- **4+ `adequate` ratings** (theme inspection happens at the LLM layer — the script just flags candidates)
+- **weighted `poor` >= 2.0** (recency-equivalent of "2 recent poor ratings"; a single project counts), OR
+- **weighted `adequate` >= 4.0** (theme inspection happens at the LLM layer — the script just flags candidates)
 
-When a threshold is hit, refine `templates/team/.claude/agent-registry/<agent>.md` — update the system prompt, tool scope, or constraints to address the recurring issue. Summarize the refinement and tell the operator what changed. **Do not wait to be asked** — the script flags candidates; Lilo follows up.
+Each flagged agent carries both the weighted score (`wpoor`/`wadequate`) and the raw counts + newest-first notes, so you can see whether a flag is recent-and-live or a fading tail. When a threshold is hit, refine `templates/team/.claude/agent-registry/<agent>.md` — update the system prompt, tool scope, or constraints to address the recurring issue. But first check `last_poor` and the note weights: if every poor predates the guardrail already in the spec, the fix is likely already in — say so rather than re-editing. Summarize what you found (refined, or verified-already-addressed) and tell the operator. **Do not wait to be asked** — the script flags candidates; Lilo follows up.

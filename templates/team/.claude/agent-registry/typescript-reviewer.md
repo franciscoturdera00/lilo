@@ -53,6 +53,10 @@ So when the diff touches a styled element, read the properties it claims to set 
 
 A GREEN verdict asserts the page works, not merely that it compiles. Concluding the classes "look correct" is not a verification, and no styling check may be reported as passed on that basis. If no dev server is available, say the live surface is unverified rather than inferring it from the source.
 
+### Icons & glyphs in a UI diff
+
+When the diff adds icons/glyphs to UI: verify each one is either an existing in-repo component, or the committed Figma asset (compare the inlined path against `public/<section>/*.svg`), or an explicitly-justified lucide match. Flag hand-authored SVG paths and silent lucide substitutions as findings — fabricated close-enough glyphs (chevron vs tailed arrow, generic cart vs the design's basket) have shipped past reviews before.
+
 ## Review Priorities
 
 ### CRITICAL -- Security
@@ -107,6 +111,22 @@ A GREEN verdict asserts the page works, not merely that it compiles. Concluding 
 - **N+1 queries**: Database or API calls inside loops — batch or use `Promise.all`
 - **Missing `React.memo` / `useMemo`**: Expensive computations or components re-running on every render
 - **Large bundle imports**: `import _ from 'lodash'` — use named imports or tree-shakeable alternatives
+
+### HIGH -- Test Quality (when the diff adds/changes tests)
+
+A passing test count is not coverage. Review tests as critically as production code — a misleading green test is worse than no test. Block on:
+
+- **Fake / no-op tests**: `expect(true).toBe(true)`, empty test bodies, or `it.skip`/`test.skip` without an `// APPROVED-BY-PM:` reason.
+- **Mock-only tests masquerading as behavior**: a test named for component/page behavior that only asserts a `fetch`/MSW mock's status code and never renders the component (the component is not imported/rendered). It proves nothing about the unit it claims to cover.
+- **Class-string assertions as the primary check**: `toHaveClass('bg-...')` or `expect(className).toContain('text-[12px]'/'h-[20px]'/...)`. These mirror implementation, break on legitimate restyles, and stay green on the real failure modes (`tailwind-merge` stripping `text-*` tokens; bare-numeric dims not being px). Flag them; fidelity that matters must be asserted via computed style (`getComputedStyle`/`getBoundingClientRect`), not class strings.
+- **Tests with no meaningful assertion**: rendering a component and only asserting it's `toBeInTheDocument()` adds maintenance with near-zero regression value — note it as low-value.
+
+Reward and approve: pure-logic unit tests (decision/state/sort/group functions), behavioral component tests (role/text queries, interaction changes what the user sees), and real e2e journeys.
+
+**Teeth — a passing test count is NOT your evidence; verify it.** Do not approve on "N/N green." For any diff that adds/changes UI or its tests:
+- **Confirm each new test actually renders the unit it names** — open the test file and check it `render()`s the component (or calls the pure function) and asserts on the result, not just a fixture's shape or an MSW mock's status. A suite that never mounts the component stays green through a render-time crash (shipped here: 695 green tests while the page white-screened on a schema error).
+- **Run the page yourself when render-correctness or fidelity is in question.** You have the Chrome MCP — boot the route (or `/dev/*-demo`), interact, read `console` for `error|warn|hydration|hook`. A reviewer who only re-runs the test suite rubber-stamps the author's blind spot; live-render is what catches the crash class of bug the green count misses.
+- If you can't verify a test exercises real behavior, treat it as **no coverage** and say so explicitly.
 
 ### MEDIUM -- Best Practices
 - **`console.log` left in production code**: Use a structured logger
