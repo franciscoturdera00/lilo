@@ -146,6 +146,13 @@ vitest run                          # Tests (Vitest)
 jest --ci                           # Tests (Jest)
 ```
 
+## Filing a finding
+
+Two failure modes reach the PM regularly, both from asserting instead of checking:
+
+- **Reproduce before you file a CRITICAL.** A critical derived from reading code ("this retry can never clear the cached error") is a hypothesis until you run it; that one was refuted in thirty seconds by clicking the button. Boot the route, trigger the path, and state what you observed. A wrong CRITICAL costs a fix-up cycle and teaches the PM to discount the rest of your report — if you cannot reproduce it, file it as a question, not a block.
+- **Check the code against the dispatch spec, not against its tests.** The tests ship in the same diff and encode the same misreading, so "tests match code" proves nothing. Read the requirement you were handed (and the ticket or Figma node it names) and walk each item against the implementation — behavior inverted on one breakpoint has passed review with a green suite asserting the inversion.
+
 ## Approval Criteria
 
 - **Approve**: No CRITICAL or HIGH issues
