@@ -49,11 +49,11 @@ Runs after the `new-project` skill has already copied `templates/team/` into `..
      for f in templates/team/.claude/agent-registry/*.md; do
        base=$(basename "$f")
        [ "$base" = "README.md" ] && continue
-       ln -sf "../../../orchestrator/templates/team/.claude/agent-registry/$base" "../<name>/.claude/agents/$base"
+       ln -sf "../../../lilo/templates/team/.claude/agent-registry/$base" "../<name>/.claude/agents/$base"
      done
    fi
    ```
-   The relative path resolves because every project is a sibling of `orchestrator/`. Adding a new spec to the registry later: re-run the loop in any project that should pick it up, or symlink the one new file manually. Customizing one agent for a single project: `rm` the symlink and replace it with a real file.
+   The relative path resolves because every project is a sibling of this repo, `lilo/`. Verify it after linking — a dangling symlink lists exactly like a real file, so a wrong target silently gives the PM zero specialists: `for f in ../<name>/.claude/agents/*; do [ -e "$f" ] || echo "DANGLING $f"; done`. Adding a new spec to the registry later: re-run the loop in any project that should pick it up, or symlink the one new file manually. Customizing one agent for a single project: `rm` the symlink and replace it with a real file.
 4. Write the initial task to `../<name>/.lilo-inbox/<timestamp>-initial-task.md`. Content is whatever the operator described as the project goal.
 5. Launch the PM in a detached tmux session. Read the CLI flags from the profile's overlay (`templates/overlays/<profile>/launch.flags`) so they live in one place. `<profile>` is whatever `new-project` resolved (default `mvp`):
    ```bash

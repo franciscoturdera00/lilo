@@ -95,7 +95,7 @@ In addition, Lilo has two **orchestrator-only** subagents that are NOT part of t
 
 Both are haiku-scoped so each cron tick is cheap and burns subagent context, not Lilo's.
 
-When you add or edit a registry spec: edit the file under `templates/team/.claude/agent-registry/`. PMs that already have a symlink pick up edits on next session start. To make a NEW spec available in an existing project, add the symlink manually: `ln -sf ../../../orchestrator/templates/team/.claude/agent-registry/<name>.md ../<project>/.claude/agents/<name>.md`.
+When you add or edit a registry spec: edit the file under `templates/team/.claude/agent-registry/`. PMs that already have a symlink pick up edits on next session start. To make a NEW spec available in an existing project, add the symlink manually: `ln -sf ../../../lilo/templates/team/.claude/agent-registry/<name>.md ../<project>/.claude/agents/<name>.md`.
 
 If Lilo needs a new specialist in the curated set (something the orchestrator itself would dispatch, not something a PM would):
 ```bash
