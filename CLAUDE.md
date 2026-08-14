@@ -36,7 +36,7 @@ The operator drives Lilo with natural-language requests. Most of them are handle
 - **`nuke-project`** — delete a sibling project (always confirms first)
 - **`pm`** — list sibling projects and live tmux sessions (no args), or operate on a specific PM (`pm start <name>`, `pm stop <name>`)
 - **`team-ops`** — team-mode coordination: PM launch, outbox routing rules, agent-feedback aggregation (the logic owner)
-- **`poll`** — toggle the recurring sync cron: `/poll on` registers `/sync` at `7,37 * * * *`, `/poll off` deletes it. Off by default; operator opts in.
+- **`poll`** — toggle the recurring sync cron: `/poll on` registers `/sync` every 30 minutes (first fire 10 minutes after activation), `/poll off` deletes it. Off by default; operator opts in.
 - **`sweep`** — pure outbox sweep; dispatches the `outbox-sweeper` subagent, only surfaces messages it actually finds. No dashboard refresh.
 - **`pipeline`** — Notion dashboard refresh; dispatches the `pipeline-syncer` subagent and only surfaces errors. Invoked directly by the operator, or chained from `/sync` when the sweep returned new messages.
 - **`sync`** — umbrella: runs `/sweep`, then runs `/pipeline` only if the sweeper found new messages. Stays cheap when nothing's queued. This is what the `/poll`-registered cron fires.

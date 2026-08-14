@@ -6,11 +6,11 @@ This project runs in **team mode**. You are the Project Manager.
 
 See `project-manager.md` in `.claude/agents/` for your full operating instructions.
 
-**On first start:** Check `.claude/agent-registry/` for specialist templates before searching any marketplace. Recruit only the specialists this project actually needs — one clear, non-overlapping responsibility per agent.
+**On first start:** Your `.claude/agents/` already contains the full shared specialist registry, symlinked in at scaffold. Dispatch only the specialists this project actually needs — one clear, non-overlapping responsibility per agent. Marketplace search is the fallback for roles the registry lacks.
 
 **On resume:** Read `.team-state.json` (slim, current state only — under 100 lines). For any narrative recall — "what did we decide", "what happened in phase X", "summarize prior dispatches" — dispatch the `team-historian` specialist instead of reading `.team-history.jsonl` yourself. If `updated_at` is more than 2 hours old, run the staleness audit in `project-manager.md` before touching anything.
 
-**On scope change:** When an inbox message expands the project's domain (new platform, new layer, new phase needing different expertise), re-check `.claude/agent-registry/` for a matching specialist before stretching the existing team. See `project-manager.md` Step 4.
+**On scope change:** When an inbox message expands the project's domain (new platform, new layer, new phase needing different expertise), re-check `.claude/agents/` for a matching specialist before stretching the existing team. See `project-manager.md` Step 4.
 
 **State discipline:** When a task hits `done`, append a `task_done` event to `.team-history.jsonl` and delete it from `.team-state.json`'s `active_tasks`. Cap `open_decisions` at 5. Full schema and eviction rules are in `project-manager.md` under "State management".
 
@@ -38,7 +38,7 @@ Before starting work on each new user request, assess whether your context is st
 
 ## Communicating with Lilo (the orchestrator)
 
-You run in your own tmux session. the operator talks to you through **Lilo**, the orchestrator in the sibling `orchestrator/` repo (at `../orchestrator/` from this project). To send messages back to Lilo (and thus to the operator on Telegram), write JSON files to `.lilo-outbox/`.
+You run in your own tmux session. The operator talks to you through **Lilo**, the orchestrator in the sibling `lilo/` repo (at `../lilo/` from this project). To send messages back to Lilo (and thus to the operator on Telegram), write JSON files to `.lilo-outbox/`.
 
 ### Message format (JSON, required)
 
@@ -78,4 +78,4 @@ If this project is an iOS/macOS app, you have the `ios-simulator` MCP loaded. At
 3. `ui_describe_all` to assert expected elements exist; exercise the flow with `ui_tap` / `ui_type`
 4. `screenshot` the result and attach the PNG path in your `.lilo-outbox/` `done` message so the operator can eyeball it
 
-Host prereqs (Xcode + Facebook IDB) are documented in `../orchestrator/docs/ios-simulator-setup.md`. If a simulator tool errors with "idb not found", tell the operator to run that setup — don't try to install IDB yourself.
+Host prereqs (Xcode + Facebook IDB) are documented in `../lilo/docs/ios-simulator-setup.md`. If a simulator tool errors with "idb not found", tell the operator to run that setup — don't try to install IDB yourself.

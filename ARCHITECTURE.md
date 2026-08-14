@@ -24,12 +24,13 @@ template and auto-launches the PM.
     Operator
       └→ PM (tmux session per project)
            │
-           │ Phase 0: Discovery & Recruitment
+           │ Phase 0: Discovery & Team Assembly
            │  1. claude mcp list → find available tools
            │  2. Read project CLAUDE.md → understand requirements
-           │  3. Check .claude/agent-registry/ (curated specialists)
-           │  4. Fall back to external marketplaces only if needed
-           │  5. Recruit 3-5 tailored specialists → save to .claude/agents/
+           │  3. .claude/agents/ already holds the full shared registry
+           │     (symlinked at scaffold from lilo/templates/team/)
+           │  4. Pick the specialists this project needs
+           │  5. Fall back to external marketplaces only for missing roles
            │  6. Brief team on available MCP tools
            │
            │ Phase 1+: Execution
@@ -43,8 +44,9 @@ template and auto-launches the PM.
            └→ .team-state.json (crash recovery)
 
 PMs communicate back to Lilo asynchronously through
-`.lilo-outbox/*.json`. Lilo sweeps those on a cron and relays to the
-operator per the routing rules in `CLAUDE.md`.
+`.lilo-outbox/*.json`. Lilo sweeps those on the opt-in `/poll` cron
+(or on-demand `/sync`) and relays to the operator per the routing
+rules in `CLAUDE.md`.
 
 ## Repo contents
 
@@ -60,7 +62,8 @@ operator per the routing rules in `CLAUDE.md`.
         settings.json        # permissions allowlist
         skills/              # bootstrap, new-project, nuke-project, pm, team-ops, sweep, pipeline, sync, poll, toolify, find-agent, kill
       templates/
-        team/                # PM scaffold with .claude/agent-registry/
+        team/                # PM scaffold; its .claude/agent-registry/ is the
+                             # shared roster, symlinked into every project
       tools/                 # MCP bridge, framework lib, registry
 
 ## Commands
@@ -78,11 +81,14 @@ Intent matching lives in the skill descriptions (`.claude/skills/<name>/SKILL.md
 
 ## Key behaviors
 
-- **PM recruits its own team** — curated specialists in `.claude/agent-registry/`
-  first, external marketplaces as fallback. Composition is tailored per project.
+- **PM inherits the full registry** — every spec in
+  `templates/team/.claude/agent-registry/` is symlinked into the project's
+  `.claude/agents/` at scaffold. The PM dispatches the subset the project
+  needs; external marketplaces are the fallback for missing roles only.
 - **MCP tools inherited** — account-level MCPs (Notion, Figma, Gmail, etc.)
   are available to all sessions automatically
-- **PM discovers MCPs before recruiting** — available tools inform team composition
+- **PM discovers MCPs before planning** — available tools inform which
+  specialists get dispatched
 - **PM refreshes MCPs each phase** — picks up newly added integrations
 - **Crash recovery** — `.team-state.json` lets a PM rebuild team state on resume
 - **Outbox relay** — PMs write JSON to `.lilo-outbox/`, Lilo sweeps and routes
@@ -92,4 +98,5 @@ Intent matching lives in the skill descriptions (`.claude/skills/<name>/SKILL.md
 
 - Agent teams can't be resumed directly — PM recreates team from `.team-state.json`
 - One team per PM session, no nested teams
-- The outbox sweep cron is session-only; Lilo re-registers it on every startup
+- The outbox sweep cron is opt-in (`/poll on`) and session-scoped — re-enable
+  it after a Lilo restart if you want polling back

@@ -35,7 +35,7 @@ Use these tools FIRST. Fall back to `xcrun simctl` only when the MCP doesn't cov
 | `screenshot` | Capture PNG for the outbox |
 | `record_video` / `stop_recording` | Capture flow for complex/animation bugs |
 
-Host prereqs (Xcode + Facebook IDB) live in `../orchestrator/docs/ios-simulator-setup.md`. If an MCP tool errors with `idb not found`, do NOT try to install IDB yourself — tell the PM to run the setup doc.
+Host prereqs (Xcode + Facebook IDB) live in `../lilo/docs/ios-simulator-setup.md`. If an MCP tool errors with `idb not found`, do NOT try to install IDB yourself — tell the PM to run the setup doc.
 
 ## Build → install → launch: two paths
 

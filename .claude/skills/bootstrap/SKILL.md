@@ -140,7 +140,7 @@ The `tools/` framework ships inside this repo (`./tools/`). The MCP bridge reads
 
 ## Step 5 — Pipeline dashboard (optional, recommended)
 
-A live cross-project Notion dashboard backed by the cron tick. Refreshes every 30 minutes — same `7,37 * * * *` schedule as the outbox sweep. Skip if the operator doesn't use Notion.
+A live cross-project Notion dashboard backed by the cron tick. Refreshes on the same recurring `/sync` cadence as the outbox sweep (every 30 minutes when `/poll` is on). Skip if the operator doesn't use Notion.
 
 Prereq: the Notion MCP must be connected at the account level (Step 2). Verify by checking `.mcp.json` or `claude mcp list` shows a Notion entry — if not, point the operator at the install flow and skip.
 

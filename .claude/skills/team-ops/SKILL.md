@@ -117,7 +117,7 @@ When relaying, lead with the `summary` line and include `project:` as context. U
 
 ### Housekeeping
 
-After reading a message and relaying (or batching) it, move the file to `../<project>/.lilo-outbox/processed/` so it is not processed twice. The sweep cron (`7,37 * * * *`) excludes `processed/` subdirs on its next pass.
+After reading a message and relaying (or batching) it, move the file to `../<project>/.lilo-outbox/processed/` so it is not processed twice. The recurring sweep excludes `processed/` subdirs on its next pass.
 
 ---
 

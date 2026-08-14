@@ -129,7 +129,7 @@ Write a fresh agent file in
   blocks — those are other systems' conventions.
 - Strips ALL hook configs and auto-invocation language
 - Rewrites the body in our voice — short sections, our MCP tool references
-  (not Anthropic's or theirs), our project layout (`../orchestrator/`,
+  (not Anthropic's or theirs), our project layout (`../lilo/`,
   `scratchpad/`, `.lilo-outbox/`)
 - Maps commands / workflows to tools WE already have loaded. If the source
   assumes a tool or MCP we don't have, either (a) note the prereq in the
@@ -139,9 +139,11 @@ Write a fresh agent file in
 
 ### 7. Propagate to live projects
 
-Identify live projects via `ls -d ../*/.claude/agent-registry/` and copy
-the new agent into each. Projects that don't have active work can be
-skipped; the next scaffold will pick up from the template.
+Live projects hold symlinks into the registry, so a new spec is NOT
+picked up automatically — add the symlink per project:
+`ln -sf ../../../lilo/templates/team/.claude/agent-registry/<name>.md ../<project>/.claude/agents/<name>.md`.
+Projects that don't have active work can be skipped; the next scaffold
+links the full registry anyway.
 
 If the operator has asked the PM of a specific project to re-draft their
 team, update the existing inbox message to flag the new specialist as a

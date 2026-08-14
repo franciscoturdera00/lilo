@@ -3,7 +3,7 @@
 **Lilo** is a long-running Claude Code session that encapsulates and
 manages your projects under a standardized framework. Each project
 lives as a sibling directory and runs its own **project-manager (PM)**
-— a Claude Code session in a tmux pane that recruits specialist
+— a Claude Code session in a tmux pane that dispatches specialist
 subagents, tracks state, and drives the work. The PM communicates with
 Lilo through a typed inbox/outbox protocol. Every project scaffolds
 from customizable templates — agent registry, permissions allowlist,
@@ -87,8 +87,9 @@ Wrap in tmux for persistence:
 tmux new -s lilo "caffeinate -is claude --channels plugin:telegram@claude-plugins-official --chrome"
 ```
 
-**MCPs Lilo uses:** `lilo-tools` and `playwright` (both in
-`.mcp.json` — see [`.mcp.recommended.json`](.mcp.recommended.json)),
+**MCPs Lilo uses:** `lilo-tools` and `playwright` (in `.mcp.json` —
+see [`.mcp.recommended.json`](.mcp.recommended.json); optional extras
+like `ios-simulator` are added per-machine during `bootstrap`),
 `telegram` (from `--channels`), `claude-in-chrome` (from `--chrome`).
 Account-level MCPs (Notion, Figma, Gmail, etc.) come from Claude Code's
 own config.
@@ -166,9 +167,10 @@ scheduled sweep.
 dispatches the [`pipeline-syncer`](.claude/agents/pipeline-syncer.md) subagent to refresh the Notion
 dashboard. Steady state is zero Notion calls when nothing's queued.
 
-`/poll on` registers `/sync` as a recurring cron at `7,37 * * * *`
-(twice an hour). `/poll off` deletes it. **Off by default** — the
-operator opts in. Run `/sync` manually anytime to flush on demand.
+`/poll on` registers `/sync` as a recurring cron firing every 30
+minutes, starting 10 minutes after activation. `/poll off` deletes it.
+**Off by default** — the operator opts in. Run `/sync` manually anytime
+to flush on demand.
 
 ## Tool registry
 
@@ -187,8 +189,12 @@ callable. [`registry.example.json`](tools/registry.example.json) is the empty te
 
 ## Agent registry
 
-[`templates/team/.claude/agent-registry/`](templates/team/.claude/agent-registry/) is the curated specialist
-roster PMs recruit from. A mix of:
+[`templates/team/.claude/agent-registry/`](templates/team/.claude/agent-registry/) is the shared specialist
+roster. Every scaffolded project gets the **entire registry symlinked**
+into its `.claude/agents/` — registry edits propagate to every project
+on next session start, with no per-project copies or drift. The PM
+dispatches only the specialists a project needs; marketplace search is
+the fallback for roles the registry lacks. The roster is a mix of:
 
 - **Custom agents** for this orchestrator (`code`, `scraper`,
   `db-designer`, `api-integrator`, `devops`, `frontend`, `data-pipeline`,
