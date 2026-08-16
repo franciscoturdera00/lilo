@@ -29,7 +29,7 @@ Launches the PM for an already-scaffolded sibling project. PM state lives in `..
    ```bash
    tmux has-session -t <name> 2>/dev/null && echo "already running" || echo "ok to start"
    ```
-3. Resolve the project's profile and assemble the launch flags from the matching overlay. **Do not hardcode flags here** — the project recorded its profile at scaffold time so a restart doesn't silently downgrade it (e.g., a `work` project getting relaunched with `mvp`'s `--strict-mcp-config` and losing all account connectors):
+3. Resolve the project's profile and assemble the launch flags from the matching overlay. **Do not hardcode flags here** — read them from the overlay's `launch.flags` so they live in one place (profiles currently share the same flags, but that can change):
    ```bash
    PROFILE=$(cat ../<name>/.team-profile 2>/dev/null || echo mvp)
    FLAGS=$(cat templates/overlays/$PROFILE/launch.flags)

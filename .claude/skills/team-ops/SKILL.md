@@ -60,11 +60,7 @@ Runs after the `new-project` skill has already copied `templates/team/` into `..
    FLAGS=$(cat templates/overlays/<profile>/launch.flags)
    tmux new -d -s <name> "cd ../<name> && claude $FLAGS"
    ```
-   Profile defaults today:
-   - `mvp` → `--dangerously-skip-permissions --chrome --strict-mcp-config --mcp-config .mcp.json` — blocks account-level connectors so PM context stays slim; stdio MCPs come only from the project's `.mcp.json` (`playwright` + `ios-simulator`).
-   - `work` → `--permission-mode auto --chrome --mcp-config .mcp.json` — drops `--strict-mcp-config` so work connectors (HubSpot/GitHub/ClickUp/Figma) load; the project's `settings.json` `permissions.deny` list blocks personal connectors (Telegram/Notion/Gmail/etc.) belt-and-suspenders. `auto` lets Claude self-vet permission prompts, blocking risky actions while auto-approving safe ones.
-
-   `--chrome` is independent of MCP scoping and is unaffected by either profile.
+   Profile defaults today: both profiles launch with `--permission-mode auto --chrome`. `auto` lets Claude self-vet permission prompts, blocking risky actions while auto-approving safe ones. No MCP flags — the project's `.mcp.json` (`playwright` + `ios-simulator`) and account-level connectors load per Claude Code's normal config resolution. What still separates the profiles is the `work` overlay's `project/` subtree: a tighter `settings.json` (deny list blocking personal connectors — Telegram/Notion/Gmail/etc. — plus `git push`/publish/destructive-op denies) and its own `.mcp.json`. `mvp` has no deny list, so account connectors are available to mvp PMs.
 6. Kick off the PM with the check-inbox nudge. **Send the text and the Enter as two separate `tmux send-keys` calls, with a brief sleep between.** A single call with inline `Enter` (or `C-m`) often queues the prompt into the input buffer without submitting it — the operator then sees an unsent prompt and has to nudge Lilo to press send. Two calls is reliable:
    ```bash
    tmux send-keys -t <name> "Run /check-inbox to read your first task, then start working. Run /check-inbox again at every natural breakpoint (end of phase, after long operations, whenever I nudge you) — new instructions from the operator land there asynchronously. Write status updates to .lilo-outbox/ as you go."

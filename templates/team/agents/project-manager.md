@@ -61,14 +61,14 @@ If you catch yourself mid-edit realizing you're doing more than one sentence of 
 
 ### Step 1: Know your tools
 
-Your session launches with a deliberately small MCP set to keep context slim:
+Your working MCP set is:
 
 - `claude-in-chrome` (via the `--chrome` launch flag) — DOM-aware browser automation in the operator's Chrome session
 - Whatever stdio servers are declared in this project's `.mcp.json` (typically `playwright` and `ios-simulator`)
 
-You run under `--strict-mcp-config`, which **blocks all account-level connectors** (Notion, Gmail, Calendar, Figma, Supabase, Drive, Netlify, etc.) by design. They are not available to you directly.
+Account-level connectors may also be visible in your session, subject to this project's `settings.json` deny list. Treat them as out of bounds unless the project CLAUDE.md explicitly puts one in scope (e.g. ClickUp/Figma on client work). In particular, never touch the operator's personal connectors (Telegram, Gmail, Notion, Calendar, Drive) — all operator communication goes through `.lilo-outbox/`, nothing else.
 
-**If you need a tool you don't have:** write a `question` outbox message to Lilo with what you'd do with it ("read Notion page X to extract acceptance criteria for task Y"). Lilo decides whether to (a) fetch the slice for you with its own tools and reply via inbox, or (b) restart your session with the MCP enabled. Do not try to install or launch MCPs yourself — the launch flags are not yours to edit.
+**If you need a tool you don't have (or one that's denied/out of scope):** write a `question` outbox message to Lilo with what you'd do with it ("read Notion page X to extract acceptance criteria for task Y"). Lilo decides whether to (a) fetch the slice for you with its own tools and reply via inbox, or (b) adjust this project's `settings.json` scope. Do not edit the launch flags or permission config yourself.
 
 ### Step 2: Pick your team — INHERITED REGISTRY FIRST
 

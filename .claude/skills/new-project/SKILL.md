@@ -1,6 +1,6 @@
 ---
 name: new-project
-description: Scaffold a new Claude Code project as a sibling of the orchestrator repo. Use when the operator says "new project <name>", "start a project called X", "spin up X", "scaffold X", or anything equivalent. All projects scaffold with the team template (PM + specialist agents) and auto-launch the PM in tmux. Accepts an optional `--profile mvp|work` to layer a config overlay on top of the base team template (default: `mvp`). Use `--profile work` for paid-client projects that need tighter permissions and work-only MCP connectors (HubSpot, GitHub, ClickUp, Figma).
+description: Scaffold a new Claude Code project as a sibling of the orchestrator repo. Use when the operator says "new project <name>", "start a project called X", "spin up X", "scaffold X", or anything equivalent. All projects scaffold with the team template (PM + specialist agents) and auto-launch the PM in tmux. Accepts an optional `--profile mvp|work` to layer a config overlay on top of the base team template (default: `mvp`). Use `--profile work` for paid-client projects that need tighter permissions (deny list on personal connectors and destructive ops).
 ---
 
 # new-project
@@ -13,8 +13,9 @@ relay, the whole setup. There is no single-session option.
 
 - `<name>` — project directory name (slug-style, no spaces)
 - `--profile <mvp|work>` — optional config overlay (default: `mvp`)
-  - `mvp` — loose defaults: `--dangerously-skip-permissions`, all account connectors blocked via `--strict-mcp-config`, permissive Bash/MCP allowlist. Right for personal/experimental projects.
-  - `work` — tightened defaults: `--permission-mode auto` (Claude self-vets each tool call, auto-approving safe ones and blocking risky ones), strict-mcp dropped so work connectors load (HubSpot/GitHub/ClickUp/Figma), personal connectors (Telegram/Notion/Gmail/Drive/Calendar/Supabase/Netlify/lilo-tools/computer-use/picarx) explicitly denied, `git push` / `npm publish` / destructive ops on the deny list, ssh/scp/rsync denied. Right for paid-client work.
+  Both profiles launch with `--permission-mode auto` (Claude self-vets each tool call, auto-approving safe ones and blocking risky ones); they differ only in the project config the overlay copies in:
+  - `mvp` — base team template as-is: permissive Bash/MCP allowlist, no deny list (account connectors available). Right for personal/experimental projects.
+  - `work` — tighter `settings.json`: work connectors allowed (HubSpot/GitHub/ClickUp/Figma), personal connectors (Telegram/Notion/Gmail/Drive/Calendar/Supabase/Netlify/lilo-tools/computer-use/picarx) explicitly denied, `git push` / `npm publish` / destructive ops on the deny list, ssh/scp/rsync denied. Right for paid-client work.
 
 If the operator describes the project context but doesn't name a profile, infer it: client work → `work`, anything else → `mvp`. Confirm with the operator before scaffolding if it's ambiguous.
 

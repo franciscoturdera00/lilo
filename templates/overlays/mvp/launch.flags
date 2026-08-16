@@ -1,1 +1,1 @@
---dangerously-skip-permissions --chrome --strict-mcp-config --mcp-config .mcp.json
+--permission-mode auto --chrome

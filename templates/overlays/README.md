@@ -29,8 +29,10 @@ templates/overlays/
 
 ## Profiles
 
-- **`mvp`** — loose defaults for personal/experimental projects: `--dangerously-skip-permissions`, all account connectors blocked via `--strict-mcp-config`, Bash/MCP allowlist permissive.
-- **`work`** — tighter defaults for paid client work: `--permission-mode auto` (Claude self-vets each tool call, auto-approving safe ones and blocking risky ones), `--strict-mcp-config` dropped so work connectors (HubSpot/GitHub/ClickUp/Figma) load, but personal connectors (Telegram/Notion/Gmail/etc.) explicitly denied via `permissions.deny`.
+Both profiles launch with the same flags: `--permission-mode auto --chrome` (Claude self-vets each tool call, auto-approving safe ones and blocking risky ones). No MCP flags — account connectors and the project's `.mcp.json` load per normal config resolution. The profiles differ only in the copied project config:
+
+- **`mvp`** — the base team template as-is: permissive Bash/MCP allowlist, no deny list, so account connectors are available. Right for personal/experimental projects.
+- **`work`** — overlays a tighter `.claude/settings.json` for paid client work: work connectors (HubSpot/GitHub/ClickUp/Figma) allowed, personal connectors (Telegram/Notion/Gmail/etc.) explicitly denied via `permissions.deny`, plus `git push`/publish/destructive-op denies.
 
 ## Adding a new profile
 
