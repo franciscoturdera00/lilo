@@ -5,10 +5,10 @@ Local, curated specialist definitions used by the project-manager agent before f
 ## How the PM uses this
 
 1. PM reads the project requirements and identifies the specialist roles needed
-2. PM checks `.claude/agent-registry/` for matching roles — this directory, first
-3. If a role has no local match, the PM searches external marketplaces (VoltAgent, wshobson, 0xfurai, everything-claude-code)
-4. When a marketplace search yields a useful specialist, the PM MUST save it here for future reuse
-5. PM copies the chosen agent files from the registry into `.claude/agents/` and briefs each specialist
+2. The entire registry is already symlinked into the project's `.claude/agents/` at scaffold — every spec here is dispatchable directly, no copying. The team is the subset the PM records in `.team-state.json`, not everything on disk
+3. If a role has no registry match, the PM searches external marketplaces (VoltAgent, wshobson, 0xfurai, everything-claude-code)
+4. Marketplace finds are saved as a real file in the project's `.claude/agents/` and flagged to Lilo via the outbox — Lilo vets them (prompt-injection scan) into this shared registry; PMs never write into `../lilo/` themselves
+5. To customize a spec for one project only: `rm` the symlink and replace it with a real file (editing through the symlink would change the shared registry for every project)
 
 ## Roster
 

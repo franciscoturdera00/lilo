@@ -86,7 +86,7 @@ Single source of truth: `templates/team/.claude/agent-registry/*.md`. One spec p
   - `design-critic` — harsh quality critique of user-facing content in the repo
   - `stitch-operator` — drives the PicarX robot (Stitch) via the `picarx` MCP. Scoped to picarx tools only. Dispatched for any "tell Stitch to..." request.
 
-Edits to any registry spec immediately affect Lilo's next dispatch of that specialist — the symlinks resolve at read time, no sync script.
+Edits to any registry spec reach Lilo's dispatches without a copy step (symlinks), but not necessarily on the very next dispatch — agent definitions can be served from a stale cache for a while after a mid-session edit (observed 2026-08-16). Verify from behavior which version ran before trusting a dispatch as a test of a spec change.
 
 In addition, Lilo has two **orchestrator-only** subagents that are NOT part of the registry — they live as plain files in `.claude/agents/` because no PM ever dispatches them:
 
