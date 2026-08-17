@@ -14,77 +14,77 @@ Local, curated specialist definitions used by the project-manager agent before f
 
 ### Implementation (pick one per dispatch)
 
-| Agent | Model | Use case |
-|---|---|---|
-| code | sonnet | General implementation. SCOPE IS LAW — touch only what the brief enumerates |
-| code-architect | sonnet | Feature-level architectural design before implementation |
-| frontend | sonnet | HTML/CSS/JS/React UI work |
-| api-integrator | sonnet | External API clients |
-| data-pipeline | sonnet | ETL, normalization |
-| db-designer | sonnet | Schema design, migrations |
-| scraper | sonnet | Playwright, data extraction |
-| devops | sonnet | Deploy, Docker, cron, systemd |
+| Agent | Use case |
+|---|---|
+| code | General implementation. SCOPE IS LAW — touch only what the brief enumerates |
+| code-architect | Feature-level architectural design before implementation |
+| frontend | HTML/CSS/JS/React UI work |
+| api-integrator | External API clients |
+| data-pipeline | ETL, normalization |
+| db-designer | Schema design, migrations |
+| scraper | Playwright, data extraction |
+| devops | Deploy, Docker, cron, systemd |
 
 ### Review (fan out after implementation)
 
-| Agent | Model | Use case |
-|---|---|---|
-| code-reviewer | sonnet | General code-quality and security review — default reviewer |
-| typescript-reviewer | sonnet | TypeScript/JavaScript deep-dive review |
-| python-reviewer | sonnet | Python deep-dive review |
-| security-reviewer | opus | Pre-deploy security pass |
-| design-critic | sonnet | Harsh UI/UX review |
-| document-critic | sonnet | Prose/docs review |
-| type-design-analyzer | sonnet | Type safety and invariant expression |
-| silent-failure-hunter | sonnet | Finds swallowed errors, bad fallbacks, missing propagation |
-| comment-analyzer | sonnet | Comment accuracy, rot, usefulness |
-| pr-test-analyzer | sonnet | PR test coverage and quality |
+| Agent | Use case |
+|---|---|
+| code-reviewer | General code-quality and security review — default reviewer |
+| typescript-reviewer | TypeScript/JavaScript deep-dive review |
+| python-reviewer | Python deep-dive review |
+| security-reviewer | Pre-deploy security pass |
+| design-critic | Harsh UI/UX review |
+| document-critic | Prose/docs review |
+| type-design-analyzer | Type safety and invariant expression |
+| silent-failure-hunter | Finds swallowed errors, bad fallbacks, missing propagation |
+| comment-analyzer | Comment accuracy, rot, usefulness |
+| pr-test-analyzer | PR test coverage and quality |
 
 ### Cleanup and optimization
 
-| Agent | Model | Use case |
-|---|---|---|
-| code-simplifier | sonnet | Clarity, consistency, preserve behavior |
-| refactor-cleaner | sonnet | Dead code removal, duplicate consolidation |
-| performance-optimizer | sonnet | Bottlenecks, bundle sizes, memory leaks |
-| build-error-resolver | sonnet | Minimal-diff fixes to unblock build/type errors |
+| Agent | Use case |
+|---|---|
+| code-simplifier | Clarity, consistency, preserve behavior |
+| refactor-cleaner | Dead code removal, duplicate consolidation |
+| performance-optimizer | Bottlenecks, bundle sizes, memory leaks |
+| build-error-resolver | Minimal-diff fixes to unblock build/type errors |
 
 ### Testing
 
-| Agent | Model | Use case |
-|---|---|---|
-| test | sonnet | General unit + integration tests |
-| tdd-guide | sonnet | Enforces write-tests-first methodology |
-| e2e-runner | sonnet | End-to-end flows via Playwright + Chrome MCP for live debugging |
-| ios-sim-driver | sonnet | iOS Simulator verification — boot/install/launch, UI assertions, screenshots |
+| Agent | Use case |
+|---|---|
+| test | General unit + integration tests |
+| tdd-guide | Enforces write-tests-first methodology |
+| e2e-runner | End-to-end flows via Playwright + Chrome MCP for live debugging |
+| ios-sim-driver | iOS Simulator verification — boot/install/launch, UI assertions, screenshots |
 
 ### Documentation
 
-| Agent | Model | Use case |
-|---|---|---|
-| docs | sonnet | READMEs, API docs, writing |
-| doc-updater | haiku | Codemap generation and doc refresh |
-| docs-lookup | sonnet | Library/framework doc lookup via Context7 MCP |
+| Agent | Use case |
+|---|---|
+| docs | READMEs, API docs, writing |
+| doc-updater | Codemap generation and doc refresh |
+| docs-lookup | Library/framework doc lookup via Context7 MCP |
 
 ### Frontend-adjacent
 
-| Agent | Model | Use case |
-|---|---|---|
-| a11y-architect | opus | WCAG 2.2 accessibility — Web and Native |
-| seo-specialist | sonnet | Technical SEO audits, structured data, Core Web Vitals |
+| Agent | Use case |
+|---|---|
+| a11y-architect | WCAG 2.2 accessibility — Web and Native |
+| seo-specialist | Technical SEO audits, structured data, Core Web Vitals |
 
 ### Specialized
 
-| Agent | Model | Use case |
-|---|---|---|
-| lora-prompt-builder | sonnet | Flux LoRA training captions, inference prompts, dataset audits |
-| stitch-operator | sonnet | Drives the PicarX robot (Stitch) via the `picarx` MCP |
+| Agent | Use case |
+|---|---|
+| lora-prompt-builder | Flux LoRA training captions, inference prompts, dataset audits |
+| stitch-operator | Drives the PicarX robot (Stitch) via the `picarx` MCP |
 
 ### PM infrastructure
 
-| Agent | Model | Use case |
-|---|---|---|
-| team-historian | haiku | Read-only `.team-history.jsonl` queries — recall prior decisions/dispatches without bloating PM context |
+| Agent | Use case |
+|---|---|
+| team-historian | Read-only `.team-history.jsonl` queries — recall prior decisions/dispatches without bloating PM context |
 
 ## Tool scoping conventions
 

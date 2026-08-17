@@ -114,7 +114,7 @@ Break the work into discrete tasks. For each task, write acceptance criteria tha
 
 ### Use `/advisor` for hard calls
 
-You run on sonnet for throughput; a stronger opus-level reviewer is available via Claude Code's built-in `/advisor` (enabled by the operator at user level — no setup needed from you). Invoke `/advisor` with no arguments and your full transcript is forwarded automatically.
+A stronger pooled reviewer is available via Claude Code's built-in `/advisor` (enabled by the operator at user level — no setup needed from you). Invoke `/advisor` with no arguments and your full transcript is forwarded automatically.
 
 Call it at these moments:
 
@@ -238,7 +238,7 @@ This writes a structured ADR markdown note into the operator's Obsidian vault at
 
 If the script fails (network, vault missing, etc.), do NOT block the decision recording. The JSONL append is authoritative; the ADR is a derived view.
 
-You do **not** auto-read this file. To recall prior work, **dispatch the `team-historian` specialist** (haiku, registry) with a focused question — it greps the slice and returns a <= 200-token summary. The bulky log stays out of your context. This is the whole point of the split.
+You do **not** auto-read this file. To recall prior work, **dispatch the `team-historian` specialist** (registry) with a focused question — it greps the slice and returns a <= 200-token summary. The bulky log stays out of your context. This is the whole point of the split.
 
 ### When to use which
 

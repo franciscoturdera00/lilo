@@ -187,7 +187,7 @@ Suggest running `new project: hello` to scaffold a throwaway project and verify 
 
 - Recap what was set up, what was skipped, and any next steps the operator still owes (e.g. install Notion or Supabase MCP in account settings).
 - Mention two opt-ins they may want now that setup is done:
-  - **`/advisor opus`** — enables a pooled opus-level reviewer that Lilo, every PM, and every specialist can consult on judgment calls. One-time user-level setting. `/advisor off` disables.
+  - **`/advisor opus`** — enables a pooled stronger reviewer that Lilo, every PM, and every specialist can consult on judgment calls. One-time user-level setting. `/advisor off` disables.
   - **`/poll on`** — registers the recurring `/sync` cron (sweep + dashboard refresh, twice an hour). Off by default; the operator opts in. `/poll off` removes it. Manual `/sync` works any time without the cron.
 - Remind them that `USER.md` is gitignored — safe to commit the repo without leaking their profile.
 - Stop. Wait for the operator's next instruction.

@@ -53,7 +53,7 @@ inside this repo.
       .mcp.recommended.json  # template; copy to .mcp.json on first clone
       .claude/
         agents/              # Lilo's curated subagents (incl. orchestrator-only
-                             # outbox-sweeper + pipeline-syncer haiku workers)
+                             # outbox-sweeper + pipeline-syncer workers)
         settings.json        # permissions
         skills/              # see Operator skills
       templates/
@@ -152,7 +152,7 @@ scheduled sweep.
 - **PM -> Lilo:** PMs write JSON messages into
   `../<project>/.lilo-outbox/`. Each carries a type and priority
   (schema in [`team-ops`](.claude/skills/team-ops/)).
-- **Sweep:** the [`outbox-sweeper`](.claude/agents/outbox-sweeper.md) subagent (haiku, filesystem-only,
+- **Sweep:** the [`outbox-sweeper`](.claude/agents/outbox-sweeper.md) subagent (filesystem-only,
   isolated context) scans every sibling outbox, archives processed
   messages, and returns a JSON summary to Lilo. Burns subagent
   context, not Lilo's.
@@ -216,9 +216,9 @@ roster with model tiers and use cases.
 
 ## Advisor
 
-PMs run on sonnet for cost. When a PM hits a judgment call, it consults
-a pooled opus-level reviewer via `/advisor` — no args, forwards the
-PM's full transcript to opus and returns advice. PMs are wired to
+When a PM hits a judgment call, it consults a pooled stronger reviewer
+via `/advisor` — no args, forwards the PM's full transcript and
+returns advice. PMs are wired to
 invoke it before committing to a plan, before marking `done`, and when
 stuck. No-op if the operator hasn't enabled it.
 

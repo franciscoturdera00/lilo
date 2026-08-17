@@ -69,7 +69,7 @@ You are connected to the `lilo-tools` MCP server (configured in `.mcp.json`), wh
 - `lilo-tools` — the tools bridge (see above)
 - `playwright` — headless Playwright for ad-hoc browser automation that isn't covered by the `claude-in-chrome` extension
 - `ios-simulator` — drives the Xcode iOS Simulator (install/launch/tap/type/screenshot/UI tree). Host prereqs (Xcode + Facebook IDB) in `docs/ios-simulator-setup.md`. Also bundled in `templates/team/.mcp.json` so PMs on app projects can verify their own builds.
-- `picarx` — SSE MCP on the Pi (`http://raspberrypi.local:8080/sse`) that drives **Stitch**, the robot. **Never call `mcp__picarx__*` tools directly from Lilo** — always dispatch via `Agent(stitch-operator, '<goal>')`. The `stitch-operator` subagent is scoped to picarx-only + sonnet so it's token-light and keeps robot-control context out of the orchestrator loop.
+- `picarx` — SSE MCP on the Pi (`http://raspberrypi.local:8080/sse`) that drives **Stitch**, the robot. **Never call `mcp__picarx__*` tools directly from Lilo** — always dispatch via `Agent(stitch-operator, '<goal>')`. The `stitch-operator` subagent is scoped to picarx-only so it's token-light and keeps robot-control context out of the orchestrator loop.
 
 Account-level MCPs (Notion, Figma, Gmail, Calendar, Telegram, etc.) come from Claude Code's config and are available without any wiring here.
 
@@ -84,7 +84,7 @@ Single source of truth: `templates/team/.claude/agent-registry/*.md`. One spec p
   - `silent-failure-hunter` — hunt swallowed errors in hooks, skills, and orchestrator code
   - `document-critic` — review docs (README, CLAUDE.md, skill SKILL.md files)
   - `design-critic` — harsh quality critique of user-facing content in the repo
-  - `stitch-operator` — drives the PicarX robot (Stitch) via the `picarx` MCP. Sonnet, scoped to picarx tools only. Dispatched for any "tell Stitch to..." request.
+  - `stitch-operator` — drives the PicarX robot (Stitch) via the `picarx` MCP. Scoped to picarx tools only. Dispatched for any "tell Stitch to..." request.
 
 Edits to any registry spec immediately affect Lilo's next dispatch of that specialist — the symlinks resolve at read time, no sync script.
 
@@ -93,7 +93,7 @@ In addition, Lilo has two **orchestrator-only** subagents that are NOT part of t
 - `outbox-sweeper` — the worker behind `/sweep`. Filesystem + Bash only. Returns a JSON summary of any messages found; Lilo does the routing.
 - `pipeline-syncer` — the worker behind `/pipeline`. Filesystem + Bash + scoped Notion MCP. Returns a JSON summary of what was synced; Lilo only surfaces errors.
 
-Both run on sonnet (the sweeper was deliberately bumped from haiku after the 2026-07-14 message-drop incident) and burn subagent context, not Lilo's.
+Both burn subagent context on each cron tick, not Lilo's.
 
 When you add or edit a registry spec: edit the file under `templates/team/.claude/agent-registry/`. PMs that already have a symlink pick up edits on next session start. To make a NEW spec available in an existing project, add the symlink manually: `ln -sf ../../../lilo/templates/team/.claude/agent-registry/<name>.md ../<project>/.claude/agents/<name>.md`.
 
