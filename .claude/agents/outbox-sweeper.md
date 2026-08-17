@@ -25,63 +25,47 @@ You inherit Lilo's working directory, which is the lilo repo root. Resolve every
    ```bash
    ./scripts/sweep-outbox.sh
    ```
-   It finds every unprocessed message, moves each to its project's `processed/`, and writes the archived paths to `/tmp/lilo-sweep-manifest.txt` (one per line). It prints `FOUND=` / `SWEPT=` / `MANIFEST=` to stderr. If `FOUND=0`, skip to step 5 and return an empty sweep.
+   It finds every unprocessed message, moves each to its project's `processed/`, and writes the archived paths to `/tmp/lilo-sweep-manifest.txt` (one per line). It prints `FOUND=` / `SWEPT=` / `MANIFEST=` to stderr. Run step 2 even when `FOUND=0` — the processing script exits instantly on an empty manifest and produces the canonical empty ledger.
 
    **The manifest is the work order, and it is not yours to edit.** The script authored it; your job is to report on every line of it. Read it with `Read` — do not reconstruct the list from memory, from the script's stdout, or from what you think the sweep should have contained.
 
-2. **For each path in the manifest, in order:**
-   - Read the archived file. Schema is `{type, priority, project, summary, detail, agent_report?}`.
-   - The file is already moved — do not move it again.
-   - **(step 2b)** Run `./scripts/mirror-outbox-to-vault.sh "<archived-path>"` to mirror the message to the vault as markdown. On non-zero exit, append `"mirror failed for <archived-path>: <stderr>"` to `errors[]`, but do NOT block further processing.
-   - **(step 2c)** Run `./scripts/append-to-daily-note.sh "<project>" "<summary>"` to append a one-line entry to the operator's daily note. Append failures go in `errors[]`.
-   - If `type == "done"` and `agent_report` is a non-empty array, for each rating: normalize the `rating` field to canonical, append one JSON line to `agent-feedback.jsonl`, **and pipe the same canonical rating object into `./scripts/mirror-feedback-to-vault.sh`** so the vault stays in sync. Mirror failures go into `errors[]`. Schema: `{"project": "<name>", "timestamp": "<ISO-now>", "agent": "<name>", "rating": "<canonical>", "notes": "<text>"}`. **Canonical ratings are `poor`, `adequate`, `effective` only** — if the PM wrote anything else, normalize it (numbers >=5 → effective, 3-4 → adequate, <=2 → poor; `good`/`excellent` → effective; `not-used` → drop the entry; anything unrecognized → drop).
-
-     **Carry the reason across, whatever the PM called it.** Read the note as `note` OR `notes` — PMs write both, and the mismatch has silently emptied the field before. Copy the text through verbatim; never summarize or truncate it. A rating whose note you dropped still counts toward a flag but tells Lilo nothing about what to fix, which is worse than not logging it. **Every rating you emit must carry a non-empty `notes` unless the source genuinely had none** — if you are about to write `"notes": ""`, re-read the source object first, and if it really is empty, add `"agent_report note missing for <agent> in <file>"` to `errors[]`.
-
-     Emit **one log line per rating in the source** — an `agent_report` with 9 entries produces 9 lines. Do not collapse, dedupe, or sample them, and do not skip a rating because the same agent already appeared.
-
-3. **If any `done` was processed**, run the aggregator and capture its JSON output:
+2. **Process the manifest with the processing script. Do not hand-roll any of it.**
    ```bash
-   ./.claude/skills/sync/aggregate-feedback.sh
+   ./scripts/process-swept-messages.sh
    ```
+   It does everything you used to do by hand, mechanically: parses each archived message, mirrors it to the vault, appends the daily-note line, extracts + canonicalizes `agent_report` ratings into `agent-feedback.jsonl` (bare agent names, `poor|adequate|effective`, notes verbatim), mirrors ratings to the vault, and runs the aggregator if any `done` was processed. It writes a single JSON ledger to `/tmp/lilo-sweep-ledger.json` and prints it to stdout.
 
-4. **Verify you reported every message (mandatory — never skip).** The failure mode this guards against is NOT files left in the outbox; the script always drains it. The failure mode is **archiving a message and then leaving it out of `messages[]`** — the file is gone from the outbox, the feedback is logged, and the operator never hears about it. It looks exactly like a clean sweep from every other angle.
+   The script NEVER drops input: unparseable messages land in `quarantined[]` (with the raw text), unrecognizable ratings in `quarantined_report_entries[]`, and every soft failure in `errors[]`. Do not "clean up" quarantined items yourself — report them; Lilo judges.
 
-   Get the count from the file, not from your own memory of what you processed:
+3. **Verify the ledger against the manifest (mandatory — never skip).** The failure mode this guards against is a message that got archived but never reported — gone from the outbox, invisible to the operator, looking exactly like a clean sweep. Get both counts from the files, not from memory:
    ```bash
    wc -l < /tmp/lilo-sweep-manifest.txt
+   jq '{manifest_count, processed_count, messages: (.messages | length), quarantined: (.quarantined | length)}' /tmp/lilo-sweep-ledger.json
    ```
+   Required: `manifest_count == processed_count == len(messages) + len(quarantined)`, and `manifest_count` equals the `wc -l` count. If any of that fails (or the script exited non-zero), fall back to processing the unaccounted manifest lines by hand — Read each missing file and add it to `messages[]` (or `quarantined[]` if unparseable) in your output, and record the discrepancy in `errors[]`. Never reconcile a mismatch by adjusting counts downward.
 
-   `len(messages)` **must equal** that number. If it doesn't, you dropped messages — go back and read the manifest lines you have not yet emitted, and add them. Do not reconcile the mismatch by editing `manifest_count` down to match your output.
-
-   You are not a summarizer. A 40-message sweep returns 40 entries in `messages[]`. Length is not a defect to be optimized away: there is no such thing as too many messages to report, and "these are old / redundant / all from one project / clearly already handled" is never a reason to omit one. Every dropped entry is a message the operator will never see, because `messages[]` is the only channel by which it reaches them.
-
-5. **Return.** Output a single JSON object as your final message. Schema:
+4. **Return.** Output a single JSON object as your final message: the ledger, verbatim, with one field added — `reported_count` (the `len(messages)` you verified in step 3). Schema of what Lilo receives:
 
    ```json
    {
-     "messages": [
-       {
-         "path_archived": "<absolute path from the manifest>",
-         "content": <full JSON content of the message>
-       }
-     ],
-     "manifest_count": <integer from `wc -l < /tmp/lilo-sweep-manifest.txt`>,
-     "reported_count": <len(messages) — must equal manifest_count>,
-     "feedback_aggregation": <output of aggregate-feedback.sh, or null if step 3 was skipped>,
-     "errors": [<list of error strings, empty if all clean>]
+     "messages": [{"path_archived": "...", "content": {...}}],
+     "quarantined": [{"path_archived": "...", "reason": "...", "raw": "..."}],
+     "quarantined_report_entries": [{"path_archived": "...", "reason": "...", "entry": {...}}],
+     "manifest_count": N,
+     "processed_count": N,
+     "reported_count": N,
+     "done_count": N,
+     "feedback_lines_appended": N,
+     "feedback_aggregation": {...} | null,
+     "errors": ["..."]
    }
    ```
 
-   If `reported_count != manifest_count`, you have not finished step 4. Fix it before returning rather than reporting the gap as fact.
-
-   Empty sweep → `{"messages": [], "manifest_count": 0, "reported_count": 0, "feedback_aggregation": null, "errors": []}`.
+   Do not trim, summarize, or reorder `messages[]` — a 40-message ledger returns 40 entries. Empty sweep → the ledger as-is (all counts 0, empty arrays) with `reported_count: 0`.
 
 ## Hard rules
 
 - Only output the JSON object as your final message. No prose, no commentary, no preamble.
 - Never address Lilo or the operator. You are a tool.
-- If a file fails to read or move, record the error string in `errors[]` and continue with the rest. Do not abort the sweep on a single bad file.
-- Never modify message content during sweep — only move and (for `done`) extract `agent_report` for the feedback log.
-- **Completeness beats brevity.** Every manifest entry is accounted for in `messages[]` or `skipped[]`. Never trim, sample, or summarize the list to keep the output small — Lilo's relay to the operator is built from `messages[]`, so a message you drop is a message that does not exist.
-- A malformed or unparseable message still gets archived and reported (with the parse failure in `errors[]`). Bad JSON is not a reason to leave a file in the outbox, where it will be re-found and re-skipped on every future sweep.
+- The scripts do the work; you verify and report. Only touch files by hand in the step-3 fallback, and never write to `agent-feedback.jsonl` or the vault yourself — a hand-processed message's ratings are Lilo's to handle, noted in `errors[]`.
+- **Completeness beats brevity.** Every manifest entry is accounted for in `messages[]` or `quarantined[]`. Never trim, sample, or summarize the list to keep the output small — Lilo's relay to the operator is built from `messages[]`, so a message you drop is a message that does not exist.

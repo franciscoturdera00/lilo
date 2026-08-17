@@ -153,9 +153,13 @@ scheduled sweep.
   `../<project>/.lilo-outbox/`. Each carries a type and priority
   (schema in [`team-ops`](.claude/skills/team-ops/)).
 - **Sweep:** the [`outbox-sweeper`](.claude/agents/outbox-sweeper.md) subagent (filesystem-only,
-  isolated context) scans every sibling outbox, archives processed
-  messages, and returns a JSON summary to Lilo. Burns subagent
-  context, not Lilo's.
+  isolated context) runs two deterministic scripts — [`sweep-outbox.sh`](scripts/sweep-outbox.sh)
+  archives every pending message to a manifest, [`process-swept-messages.sh`](scripts/process-swept-messages.sh)
+  mirrors each to the vault, canonicalizes `agent_report` ratings into
+  the feedback log, and emits a JSON ledger. The agent's job is to
+  verify ledger against manifest and pass the result to Lilo; anything
+  the scripts can't parse is quarantined in the ledger, never dropped.
+  Burns subagent context, not Lilo's.
 - **Lilo -> operator:** Lilo relays per the routing rules in
   [`CLAUDE.md`](CLAUDE.md) — urgent/blocker pings immediately, status/low batches,
   ratings flow into the registry feedback loop. Channel is whichever

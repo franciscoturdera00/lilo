@@ -40,7 +40,7 @@ The sweeper archives via `./scripts/sweep-outbox.sh`, which writes every archive
 wc -l < /tmp/lilo-sweep-manifest.txt
 ```
 
-Compare to `len(messages)`. **If they disagree, the sweeper dropped messages.** Read the missing paths yourself (they are archived, not lost) and relay them. Do not present the sweep as clean.
+Compare to `len(messages) + len(quarantined)` in the sweeper's report (`quarantined[]` holds messages the processing script could not parse — they count as swept and still need your judgment). **If the counts disagree, the sweeper dropped messages.** Read the missing paths yourself (they are archived, not lost) and relay them. Do not present the sweep as clean.
 
 This is not paranoia about a hypothetical. On 2026-07-14 a sweep archived 42 starwood messages and returned 3. Feedback for all 42 was written to the log; 39 were never relayed. Nothing errored, the outbox was empty afterward, and every surface-level check said "clean sweep." The manifest is the only thing that would have caught it — so check it, every time, even when the returned list looks plausible.
 
