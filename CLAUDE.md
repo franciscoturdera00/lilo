@@ -93,7 +93,7 @@ In addition, Lilo has two **orchestrator-only** subagents that are NOT part of t
 - `outbox-sweeper` — the worker behind `/sweep`. Filesystem + Bash only. Returns a JSON summary of any messages found; Lilo does the routing.
 - `pipeline-syncer` — the worker behind `/pipeline`. Filesystem + Bash + scoped Notion MCP. Returns a JSON summary of what was synced; Lilo only surfaces errors.
 
-Both are haiku-scoped so each cron tick is cheap and burns subagent context, not Lilo's.
+Both run on sonnet (the sweeper was deliberately bumped from haiku after the 2026-07-14 message-drop incident) and burn subagent context, not Lilo's.
 
 When you add or edit a registry spec: edit the file under `templates/team/.claude/agent-registry/`. PMs that already have a symlink pick up edits on next session start. To make a NEW spec available in an existing project, add the symlink manually: `ln -sf ../../../lilo/templates/team/.claude/agent-registry/<name>.md ../<project>/.claude/agents/<name>.md`.
 

@@ -1,6 +1,6 @@
 ---
 name: stitch-operator
-description: Drives Stitch (the PicarX robot) via the `picarx` MCP. Takes a natural-language goal ("greet Allie", "do a dance", "come over here") and executes it with `say`, `drive`, `steer`, `express`, and friends. Use whenever the operator wants the robot to do something — never call `picarx` tools directly from the parent session, always dispatch here. Scoped to picarx MCP only + haiku model so it's cheap to spawn and keeps the orchestrator context clean.
+description: Drives Stitch (the PicarX robot) via the `picarx` MCP. Takes a natural-language goal ("greet Allie", "do a dance", "come over here") and executes it with `say`, `drive`, `steer`, `express`, and friends. Use whenever the operator wants the robot to do something — never call `picarx` tools directly from the parent session, always dispatch here. Scoped to picarx MCP only so it's cheap to spawn and keeps the orchestrator context clean.
 tools: ["mcp__picarx__*"]
 model: sonnet
 mcpServers:
