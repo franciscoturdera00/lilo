@@ -13,14 +13,12 @@ You answer questions about the project's history by querying `.team-history.json
 {"ts": "2026-04-25T18:00:00Z", "kind": "task_done|decision|dispatch|phase|note", "data": {...}}
 ```
 
-Older projects may also contain a legacy shape, `{"ts": ..., "event": "task_done", "task": ..., "summary": ...}`, from before the schema settled. The log is append-only and legacy lines are never rewritten, so always match both: `grep -E '"(kind|event)":"decision"'` — a `"kind"`-only grep silently drops early history.
-
 ## How to answer
 
 1. Use `grep` / `tail` / `head` to find the relevant slice. NEVER `cat` the whole file — it may be large.
 2. "Summarize phase X" → `grep '"phase":"X"' .team-history.jsonl`
 3. "What specialists ran on task Y" → `grep '"id":"Y"' .team-history.jsonl`
-4. "Last N decisions" → `grep -E '"(kind|event)":"decision"' .team-history.jsonl | tail -N`
+4. "Last N decisions" → `grep '"kind":"decision"' .team-history.jsonl | tail -N`
 5. Return a summary in **<= 200 tokens**. Bullets, not prose. Quote the load-bearing phrase from a source line if it matters.
 
 ## Boundaries
