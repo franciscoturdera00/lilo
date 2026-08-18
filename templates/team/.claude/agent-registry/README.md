@@ -95,8 +95,9 @@ Local, curated specialist definitions used by the project-manager agent before f
 
 ## Model tier conventions
 
-- **opus**: critical reasoning (security review, architecture decisions, accessibility architecture)
-- **sonnet**: everything else — implementation, testing, review, docs
+- **fable**: highest-cascade judgment roles where a miss propagates unchecked (security-reviewer, code-architect)
+- **opus**: reviewer/gate roles and critical reasoning — every spec that gates other agents' work runs at least opus (sonnet reviewers proved to miss cascading defects, see python-reviewer bbox incident)
+- **sonnet**: implementation, testing, docs — work that a reviewer gate catches downstream
 - **haiku**: high-throughput, low-reasoning tasks (format, lint, simple lookups, doc generation)
 
 ## Refinement loop
