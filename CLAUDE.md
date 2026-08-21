@@ -25,7 +25,7 @@ Before starting work on each new user request, assess whether your context is st
 
 ## Polling
 
-The recurring sweep/pipeline crons are **off by default**. The operator opts in with `/poll on` and out with `/poll off`. Lilo never auto-registers the cron. If the operator wants to manually flush queued messages and refresh the dashboard, they invoke `/sync`.
+The recurring sync loop is **off by default**. The operator opts in with `/poll on` and out with `/poll off`. Lilo never auto-arms it. If the operator wants to manually flush queued messages and refresh the dashboard, they invoke `/sync`.
 
 ## Commands
 
@@ -36,10 +36,10 @@ The operator drives Lilo with natural-language requests. Most of them are handle
 - **`nuke-project`** — delete a sibling project (always confirms first)
 - **`pm`** — list sibling projects and live tmux sessions (no args), or operate on a specific PM (`pm start <name>`, `pm stop <name>`)
 - **`team-ops`** — team-mode coordination: PM launch, outbox routing rules, agent-feedback aggregation (the logic owner)
-- **`poll`** — toggle the recurring sync cron: `/poll on` registers `/sync` every 30 minutes (first fire 10 minutes after activation), `/poll off` deletes it. Off by default; operator opts in.
+- **`poll`** — toggle the recurring sync loop, run as self-pacing `ScheduleWakeup` ticks: `/poll on` arms it (first `/sync` ~10 minutes after activation, then adaptive 15-60 min by activity), `/poll off` stops it. Off by default; operator opts in.
 - **`sweep`** — pure outbox sweep; dispatches the `outbox-sweeper` subagent, only surfaces messages it actually finds. No dashboard refresh.
 - **`pipeline`** — Notion dashboard refresh; dispatches the `pipeline-syncer` subagent and only surfaces errors. Invoked directly by the operator, or chained from `/sync` when the sweep returned new messages.
-- **`sync`** — umbrella: runs `/sweep`, then runs `/pipeline` only if the sweeper found new messages. Stays cheap when nothing's queued. This is what the `/poll`-registered cron fires.
+- **`sync`** — umbrella: runs `/sweep`, then runs `/pipeline` only if the sweeper found new messages. Stays cheap when nothing's queued. This is what each `/poll` wakeup tick runs.
 - **`toolify`** — package a sibling project into the `tools/` framework so it's callable via the MCP bridge
 - **`find-agent`** — safely find, vet, and import a new specialist agent from an external source into the registry (mandatory prompt-injection scan before anything lands)
 
@@ -69,6 +69,7 @@ You are connected to the `lilo-tools` MCP server (configured in `.mcp.json`), wh
 - `lilo-tools` — the tools bridge (see above)
 - `playwright` — headless Playwright for ad-hoc browser automation that isn't covered by the `claude-in-chrome` extension
 - `ios-simulator` — drives the Xcode iOS Simulator (install/launch/tap/type/screenshot/UI tree). Host prereqs (Xcode + Facebook IDB) in `docs/ios-simulator-setup.md`. Also bundled in `templates/team/.mcp.json` so PMs on app projects can verify their own builds.
+- `cad-workshop` — native stdio MCP served from the sibling project's own uv venv (`cadw-mcp`): `check` / `ship` / `slice_stl` / `doctor` for 3D-printable parts. `ship` slices without the Orca inspection pause — only call it after the operator has approved the design. Tool results carry `data.files_written` for Telegram attachment.
 - `picarx` — SSE MCP on the Pi (`http://raspberrypi.local:8080/sse`) that drives **Stitch**, the robot. **Never call `mcp__picarx__*` tools directly from Lilo** — always dispatch via `Agent(stitch-operator, '<goal>')`. The `stitch-operator` subagent is scoped to picarx-only so it's token-light and keeps robot-control context out of the orchestrator loop.
 
 Account-level MCPs (Notion, Figma, Gmail, Calendar, Telegram, etc.) come from Claude Code's config and are available without any wiring here.

@@ -1,7 +1,7 @@
 ---
 name: frontend
 description: HTML/CSS/JS/React. Builds UIs, dashboards, landing pages. Tailwind fluent. Used for portfolios, dashboards, client-facing tools, and the landing-page pipeline.
-tools: ["Read", "Write", "Edit", "Bash", "Glob", "Grep", "WebFetch", "mcp__claude_ai_Figma__get_design_context", "mcp__claude_ai_Figma__get_screenshot", "mcp__claude_ai_Figma__get_metadata", "mcp__claude_ai_Figma__get_variable_defs", "mcp__claude-in-chrome__tabs_context_mcp", "mcp__claude-in-chrome__tabs_create_mcp", "mcp__claude-in-chrome__navigate", "mcp__claude-in-chrome__read_page", "mcp__claude-in-chrome__resize_window", "mcp__claude-in-chrome__javascript_tool", "mcp__claude-in-chrome__read_console_messages", "mcp__claude-in-chrome__computer", "mcp__claude-in-chrome__browser_batch"]
+tools: ["Read", "Write", "Edit", "Bash", "Glob", "Grep", "WebFetch", "mcp__claude_ai_Figma__get_design_context", "mcp__claude_ai_Figma__get_screenshot", "mcp__claude_ai_Figma__get_metadata", "mcp__claude_ai_Figma__get_variable_defs", "mcp__claude-in-chrome__tabs_context_mcp", "mcp__claude-in-chrome__tabs_create_mcp", "mcp__claude-in-chrome__navigate", "mcp__claude-in-chrome__read_page", "mcp__claude-in-chrome__resize_window", "mcp__claude-in-chrome__javascript_tool", "mcp__claude-in-chrome__read_console_messages", "mcp__claude-in-chrome__read_network_requests", "mcp__claude-in-chrome__computer", "mcp__claude-in-chrome__browser_batch"]
 model: opus
 ---
 
@@ -78,7 +78,9 @@ Tailwind silently drops unknown classes and remaps numeric ones to its default s
 - **Prefer tokens over arbitrary values.** If the project defines a token at the value you need (`rounded-8`, `space-card-pad`, `text-body-3`), use it — not `rounded-[8px]`. Arbitrary values are the fallback when no token matches, not the default.
 - **`tailwind-merge` / `cn()` is last-write-wins per property family.** Passing a typography token (`text-body-3`, sets fontSize) AND a color (`text-cerulean-600`) into the same `cn()` call can silently drop the typography token — both are `text-*`. Verify final `font-size` with `getComputedStyle` before declaring done.
 
-## Live verification with the Chrome MCP
+## Request transport — MSW-green tests prove nothing about the wire
+
+Mock service workers intercept requests before serialization bugs can surface: a client helper that `JSON.stringify`s a `FormData` body ships `"{}"` to the real backend while every mocked test stays green. When your change touches uploads, request-building helpers, or anything that sets a request body or content-type, verify the actual outgoing request against the dev backend — `mcp__claude-in-chrome__read_network_requests` after exercising the flow, or `curl` — and confirm method, content-type, and body shape. A test that only asserts the mock was called with the same object you passed in is a tautology, not coverage.
 
 The project's test commands (`npm test`, `npm run e2e`, etc.) confirm correctness; they do NOT confirm fidelity. Layout regressions can pass every test and still look broken. Before declaring a UI task done, load the page in Chrome and inspect.
 

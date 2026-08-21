@@ -14,13 +14,33 @@ This directory provides the framework for building pluggable tool adapters that 
 
 ## Adding a new tool
 
-### 1. Create adapter module in the tool repo
+### 1. Create adapter module + manifest in the tool repo
 
 Under `<tool>/adapters/`:
 
 - `__init__.py` — Empty file (creates package)
 - `mcp.py` — Expose tool functions returning ToolResult
 - `cli.py` — CLI wrapper with argparse subcommands dispatching to mcp.py via run_tool()
+
+At `<tool>/tool-manifest.json` (repo root), the action manifest — owned by the tool repo, read by the bridge at startup:
+
+```json
+{
+  "description": "Tool description",
+  "actions": [
+    {
+      "name": "my_action",
+      "description": "Action description",
+      "params": {
+        "input": {"type": "string", "required": true, "description": "Input parameter"}
+      },
+      "schedule": null
+    }
+  ]
+}
+```
+
+Any change to the actions in `mcp.py` must update `tool-manifest.json` in the same commit: an adapter function without a manifest entry is invisible to the bridge; a manifest entry without a matching function fails registration.
 
 ### 2. Symlink into tools/
 
@@ -38,7 +58,6 @@ Edit `registry.json` and add a tool object with:
 - `description` — Human-readable description
 - `path` — Relative path from tools/ (matches symlink name)
 - `adapter` — Module path to MCP adapter (e.g., `adapters.mcp`)
-- `actions` — Array of action definitions (name, description, params, schedule)
 
 Example:
 ```json
@@ -46,19 +65,11 @@ Example:
   "name": "my-tool",
   "description": "Tool description",
   "path": "my-tool",
-  "adapter": "adapters.mcp",
-  "actions": [
-    {
-      "name": "my_action",
-      "description": "Action description",
-      "params": {
-        "input": {"type": "string", "required": true, "description": "Input parameter"}
-      },
-      "schedule": null
-    }
-  ]
+  "adapter": "adapters.mcp"
 }
 ```
+
+The registry decides *which* tools are on the bridge; each tool's `tool-manifest.json` decides *what* it exposes. A registry entry may instead carry an inline `actions` array (same schema as the manifest) — used as a fallback when the tool has no `tool-manifest.json`; when both exist the manifest wins.
 
 ## Implementation conventions
 
@@ -80,7 +91,7 @@ ToolResult(success=True, data={"checks": [{"name": "...", "ok": True, "detail": 
 
 On failure, populate `data["failed"]` with the names of failed checks and use `alerts[]` for anything Lilo should surface to the operator via Telegram (e.g., "claude CLI not logged in").
 
-Every tool must also register `doctor` in `registry.json`:
+Every tool must also register `doctor` in its `tool-manifest.json` (or the registry fallback):
 ```json
 {
   "name": "doctor",

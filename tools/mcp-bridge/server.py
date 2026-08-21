@@ -269,6 +269,34 @@ def main():
 
         # Lazy-install the tool's requirements.txt into the bridge venv before importing.
         tool_dir_abs = registry_dir / tool_path
+
+        # A tool repo may carry its own action manifest (tool-manifest.json at
+        # the repo root, maintained by the project's PM). When present it is
+        # the source of truth for the action list — the registry entry then
+        # only needs name/path/adapter, and new actions ship with the tool
+        # itself. Inline registry actions remain the fallback.
+        manifest_path = tool_dir_abs / "tool-manifest.json"
+        if manifest_path.exists():
+            try:
+                with open(manifest_path, "r") as f:
+                    manifest = json.load(f)
+                manifest_actions = manifest.get("actions", [])
+                if manifest_actions:
+                    actions = manifest_actions
+                    logger.info(
+                        f"{tool_name}: {len(actions)} actions from tool-manifest.json"
+                    )
+                else:
+                    logger.warning(
+                        f"{tool_name}: tool-manifest.json has no actions; "
+                        f"using registry entry"
+                    )
+            except Exception as e:
+                logger.warning(
+                    f"{tool_name}: failed to load tool-manifest.json "
+                    f"({type(e).__name__}: {e}); using registry entry"
+                )
+
         ensure_tool_requirements(tool_name, tool_dir_abs)
 
         # Import the adapter module.

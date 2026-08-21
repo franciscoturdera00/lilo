@@ -37,6 +37,8 @@ For React/Next.js code that renders to the DOM, source-only review misses runtim
 
 This is OPTIONAL for non-UI changes — backend, library, build-config, or pure-utility TS reviews don't need the browser.
 
+When the change IS UI and the live check did not happen — no dev server, no Chrome, whatever the reason — your report says so unprompted, and the verdict cannot be an unqualified approval. A silently skipped live check has repeatedly turned a GREEN verdict into a defect the PM found by simply looking at the page; disclosing the gap is the difference between an honest partial review and a false one.
+
 ### Read the DOM, not the class string
 
 Your static analysis is consistently strong — you re-run `tsc`, tests, and lint independently and catch real issues with file:line. The defects that get past you all share one shape: they only exist once the browser paints. You have returned GREEN on an invisible badge (text color equal to its background), content overflowing at a real mobile viewport, broken centering, and font-size drift — each caught afterward by someone who simply looked at the page.
