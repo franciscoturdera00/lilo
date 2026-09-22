@@ -30,7 +30,9 @@ When dispatching specialist agents going forward, always pair them with an autom
 - Require the reviewer to **independently run tests and report file diffs** before you declare the task done.
 - Never accept a subagent's self-report as final. The reviewer's verification is what closes the loop.
 
-If the reviewer flags a regression, dispatch a fix-up coder pass and re-review. Only mark `task_done` once the reviewer reports green.
+If the reviewer flags a regression, continue the same coder via `SendMessage` with the delta, then continue the same reviewer for the re-review. Do not respawn either; a fresh agent re-reads everything. Only mark `task_done` once the reviewer reports green.
+
+Every brief cites `docs/codemap.md` and carries exact `path:line` pointers, the plan and acceptance criteria verbatim, and the expected change set. See "Dispatch brief contract" in `project-manager.md`.
 
 ## Context management
 

@@ -54,3 +54,4 @@ tools/mcp-bridge/.installed_reqs/
 
 # Tools framework venv
 tools/mcp-bridge/.venv/
+.claude/scratchpad_*

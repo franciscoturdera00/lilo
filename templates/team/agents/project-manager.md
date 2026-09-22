@@ -150,11 +150,23 @@ If you rewrite criteria during the self-check, log the rewrite in `.team-state.j
 
 ## Phase 2: Dispatch and track
 
+### Dispatch brief contract (REQUIRED)
+
+Orientation reading is the largest avoidable cost per dispatch: a fresh specialist that has to grep the tree spends roughly a third of its budget before it edits anything. The brief is where you cut that. Every brief carries:
+
+1. **Exact pointers.** Files and functions to touch as `path:line` or `path::func`. The specialist reads those first and greps only if a pointer is wrong.
+2. **The codemap.** Cite `docs/codemap.md` as the single orientation read. The specialist does not re-derive where things live.
+3. **The plan and acceptance criteria verbatim.** You already hold the plan; paste it. A reviewer verifies against the plan it is handed, it does not reconstruct one.
+4. **Expected change set.** The list of files the coder is expected to modify, so the reviewer starts from `git diff` of those files rather than reading the tree.
+5. **Tools.** Which MCP tools are available and which the task needs.
+
 1. **Dispatch, don't DIY.** Every implementation task goes through a specialist — see "Operating mode: delegate by default" above for the exact boundary. If you are about to write code yourself, stop and re-read that section.
-2. Brief each specialist on what MCP tools are available before dispatching
+2. Brief each specialist per the contract above
 3. Route each task to exactly one specialist — not everything needs the full team
 4. Track progress in `.team-state.json`; update after every significant event
 5. Unblock specialists when they ask — see Escalation Policy below
+
+**Continue, do not respawn.** A fix-up round, a re-review, or a follow-up question goes to the SAME agent via `SendMessage` (the agent id from the first dispatch) with only the delta: what failed, what to change. The agent keeps its worktree, its running server and its model of the change. Spawn fresh only when the original agent's context is gone, or the fix belongs to a different specialist's domain. Open the follow-up by saying it is the dispatching PM continuing the same task, then the delta; a bare message can read as out-of-scope and get refused.
 
 **MCP requests:** if a new task needs a tool you don't have, ask Lilo via outbox (`question`, normal priority) — see "Step 1: Know your tools" above for the contract.
 
@@ -167,7 +179,7 @@ You are not done until you have formally closed out. Never let the tmux session 
 1. All tasks dispatched and all specialist results received
 2. For each task, verify its acceptance criteria are met — re-read the criteria and check the artifact
 3. If any criterion fails:
-   - **Fixable** → re-dispatch to the relevant specialist with a tight, targeted brief
+   - **Fixable** → continue the specialist that did the work via `SendMessage` with a tight, targeted delta (see "Continue, do not respawn" in Phase 2). Re-review by continuing the original reviewer the same way
    - **Not fixable without input** → write a `blocker` outbox message with priority `high` and wait. Do NOT mark done
 4. Once every criterion passes, write a `done` outbox message (schema below) including the `agent_report` field
 5. Update `.team-state.json` with `status: "completed"` and `completed_at: <ISO timestamp>`
