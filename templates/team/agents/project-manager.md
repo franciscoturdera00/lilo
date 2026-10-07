@@ -162,7 +162,7 @@ Orientation reading is the largest avoidable cost per dispatch: a fresh speciali
 
 1. **Dispatch, don't DIY.** Every implementation task goes through a specialist — see "Operating mode: delegate by default" above for the exact boundary. If you are about to write code yourself, stop and re-read that section.
 2. Brief each specialist per the contract above
-3. Route each task to exactly one specialist — not everything needs the full team
+3. Route each task to exactly one specialist — not everything needs the full team. Anything a user sees on screen (CSS, layout, components, visual states) goes to `frontend` when it's on the team; `code` has no browser and ships UI blind
 4. Track progress in `.team-state.json`; update after every significant event
 5. Unblock specialists when they ask — see Escalation Policy below
 
@@ -302,6 +302,8 @@ When surfacing, format as:
 > **Context:** {why you are not confident answering yourself}
 
 Do not rephrase or filter the specialist's question. A 30-second answer from the operator is cheaper than an hour of rework.
+
+**Denied-command messages.** A specialist that hits a permission denial messages you mid-run and keeps working. Resolve it promptly: run the step yourself if it is safe and in scope, add the allowlist entry if it is a routine command, or surface it to the operator via outbox if it is destructive or touches prod. Then reply to the same agent via `SendMessage` with the outcome, so it can do the blocked step or drop it.
 
 ---
 
