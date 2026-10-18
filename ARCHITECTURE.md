@@ -44,9 +44,27 @@ template and auto-launches the PM.
            └→ .team-state.json (crash recovery)
 
 PMs communicate back to Lilo asynchronously through
-`.lilo-outbox/*.json`. Lilo sweeps those on the opt-in `/poll` cron
-(or on-demand `/sync`) and relays to the operator per the routing
-rules in `CLAUDE.md`.
+`.lilo-outbox/*.json`, and Lilo writes instructions to `.lilo-inbox/`.
+Lilo relays outbox messages to the operator per the routing rules in
+the `team-ops` skill.
+
+## PM transports
+
+The files are the record in both transports; the transport only
+decides how each side is told to look. `team-ops` owns the recipes.
+
+| | Desktop (Lilo in the Claude desktop app) | tmux (Lilo in the CLI) |
+|---|---|---|
+| PM runs as | a linked Desktop session (`start_session`, auto mode) | a detached tmux session (`claude --permission-mode auto --chrome`) |
+| Lilo -> PM | inbox file + cross-session nudge | inbox file + `tmux send-keys` |
+| PM -> Lilo | outbox file + cross-session ping -> targeted sweep | outbox file, picked up by `/sync` or `/poll` |
+| Stop | `/kill` via inbox, then archive the session | `/kill` via `send-keys`, then `tmux kill-session` |
+
+Lilo records each PM in `pm-sessions.json` and writes `.lilo-transport`
+into the project so the PM knows whether to ping. PMs read Lilo's
+current id from `../lilo/.lilo-session-id` and accept nudges only from
+it. Every project uses the same config: the team template, auto
+permission mode, all account connectors available.
 
 ## Repo contents
 
@@ -58,9 +76,12 @@ rules in `CLAUDE.md`.
       README.md              # repo map + setup notes
       agent-feedback.jsonl   # aggregated PM agent ratings
       .mcp.recommended.json  # template; copy to .mcp.json on first clone
+      pm-sessions.json       # gitignored runtime: which PM runs where
+      .lilo-session-id       # gitignored runtime: Lilo's Desktop session id
       .claude/
         settings.json        # permissions allowlist
         skills/              # bootstrap, new-project, nuke-project, pm, team-ops, sweep, pipeline, sync, poll, toolify, find-agent, kill
+      scripts/               # sweep, vault-mirror and render scripts (+ tests/)
       templates/
         team/                # PM scaffold; its .claude/agent-registry/ is the
                              # shared roster, symlinked into every project
@@ -76,7 +97,7 @@ Intent matching lives in the skill descriptions (`.claude/skills/<name>/SKILL.md
 | `pm` / `status` | `pm` | List sibling projects and live PM sessions |
 | `pm start <name>` | `pm` | Launch the PM for an existing project |
 | `pm stop <name>` | `pm` | Stop a PM after a /kill wrap-up (state persists, resume with `pm start`) |
-| `nuke <name>` | `nuke-project` | Kill session and delete project files (confirms first) |
+| `nuke <name>` | `nuke-project` | End the PM session and delete project files (confirms first) |
 | `bootstrap` | `bootstrap` | First-run setup walkthrough |
 
 ## Key behaviors
@@ -92,11 +113,15 @@ Intent matching lives in the skill descriptions (`.claude/skills/<name>/SKILL.md
 - **PM refreshes MCPs each phase** — picks up newly added integrations
 - **Crash recovery** — `.team-state.json` lets a PM rebuild team state on resume
 - **Outbox relay** — PMs write JSON to `.lilo-outbox/`, Lilo sweeps and routes
-  by `type`/`priority` to the operator
+  by `type`/`priority` to the operator (Desktop PMs ping Lilo to trigger
+  the sweep)
 
 ## Known limitations
 
 - Agent teams can't be resumed directly — PM recreates team from `.team-state.json`
 - One team per PM session, no nested teams
-- The outbox sweep cron is opt-in (`/poll on`) and session-scoped — re-enable
-  it after a Lilo restart if you want polling back
+- `/poll` is opt-in and session-scoped — re-enable it after a Lilo restart if
+  you want polling back. Desktop PMs don't need it; tmux PMs do.
+- A Desktop PM's pings reach only the Lilo session whose id is in
+  `.lilo-session-id`. Reports sent while Lilo is down wait in the outbox
+  until Lilo's startup sweep.
