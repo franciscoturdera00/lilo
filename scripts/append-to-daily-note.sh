@@ -9,7 +9,7 @@ set -euo pipefail
 #
 # Examples:
 #   append-to-daily-note.sh amazon-buy-scraper "shipped — pushed to public repo"
-#   append-to-daily-note.sh starwood "blocker: figma asset URL expired" -t 2026-05-12T18:30:00Z
+#   append-to-daily-note.sh my-project "blocker: asset URL expired" -t 2026-05-12T18:30:00Z
 
 if [[ $# -lt 2 ]] || [[ "$1" == "--help" ]]; then
   echo "Usage: append-to-daily-note.sh <project> <summary> [-t <iso-timestamp>]" >&2

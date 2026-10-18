@@ -5,7 +5,7 @@ description: Delete a sibling project directory entirely (destructive, irreversi
 
 # nuke-project
 
-Delete all files for a sibling project and kill its tmux session. Destructive and irreversible.
+Delete all files for a sibling project and end its PM session (Desktop or tmux). Destructive and irreversible.
 
 ## Inputs
 
@@ -13,11 +13,12 @@ Delete all files for a sibling project and kill its tmux session. Destructive an
 
 ## Steps
 
-1. **ASK THE OPERATOR TO CONFIRM FIRST.** Never proceed without explicit confirmation. Show them what will be deleted (the directory and the tmux session name).
-2. Kill any running tmux session for the project:
+1. **ASK THE OPERATOR TO CONFIRM FIRST.** Never proceed without explicit confirmation. Show them what will be deleted (the directory and the PM session, from `pm-sessions.json`).
+2. End the PM session. Desktop entry in `pm-sessions.json`: `mcp__ccd_session_mgmt__stop_session` then `archive_session` on its id (no `/kill` wrap-up: the project is being deleted). Tmux, or no entry:
    ```bash
    tmux kill-session -t <name> 2>/dev/null || true
    ```
+   Then remove the project's entry from `pm-sessions.json`.
 3. From the orchestrator repo root, delete the sibling directory:
    ```bash
    rm -rf ../<name>/

@@ -22,7 +22,7 @@ There is no single-session mode — `new-project` always copies the team
 template and auto-launches the PM.
 
     Operator
-      └→ PM (tmux session per project)
+      └→ PM (Desktop session or tmux session per project)
            │
            │ Phase 0: Discovery & Team Assembly
            │  1. claude mcp list → find available tools
@@ -72,10 +72,10 @@ Intent matching lives in the skill descriptions (`.claude/skills/<name>/SKILL.md
 
 | Intent | Skill | What it does |
 |--------|-------|-------------|
-| `new project <name>` | `new-project` + `team-ops` | Scaffold team template and launch PM in tmux |
-| `pm` / `status` | `pm` | List sibling projects and active tmux sessions |
-| `pm start <name>` | `pm` | Launch the PM tmux session for an existing project |
-| `pm stop <name>` | `pm` | Kill a PM tmux session (state persists, resume with `pm start`) |
+| `new project <name>` | `new-project` + `team-ops` | Scaffold team template and launch the PM (Desktop or tmux) |
+| `pm` / `status` | `pm` | List sibling projects and live PM sessions |
+| `pm start <name>` | `pm` | Launch the PM for an existing project |
+| `pm stop <name>` | `pm` | Stop a PM after a /kill wrap-up (state persists, resume with `pm start`) |
 | `nuke <name>` | `nuke-project` | Kill session and delete project files (confirms first) |
 | `bootstrap` | `bootstrap` | First-run setup walkthrough |
 

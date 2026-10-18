@@ -14,10 +14,12 @@
 # Design rule #2: the ledger is authored here, not by the model. The subagent's
 # job is to verify ledger count == manifest count and pass the result through.
 #
-# Usage: ./scripts/process-swept-messages.sh   (run from the lilo repo root)
+# Usage: ./scripts/process-swept-messages.sh <manifest>   (run from the lilo repo root)
+#   <manifest> is the path sweep-outbox.sh printed as MANIFEST=. There is no
+#   shared default: a fixed path lets concurrent sweeps clobber each other.
 # Env overrides (mainly for tests):
-#   MANIFEST      (default /tmp/lilo-sweep-manifest.txt)
-#   LEDGER        (default /tmp/lilo-sweep-ledger.json)
+#   MANIFEST      (alternative to the positional arg)
+#   LEDGER        (default: ledger.json next to the manifest)
 #   FEEDBACK_LOG  (default ./agent-feedback.jsonl)
 #   NO_VAULT=1    skip vault/daily-note mirroring (tests)
 #   NO_AGGREGATE=1 skip the aggregator (tests)
@@ -27,8 +29,12 @@ set -uo pipefail
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT" || exit 1
 
-MANIFEST="${MANIFEST:-/tmp/lilo-sweep-manifest.txt}"
-LEDGER="${LEDGER:-/tmp/lilo-sweep-ledger.json}"
+MANIFEST="${1:-${MANIFEST:-}}"
+if [ -z "$MANIFEST" ]; then
+    echo "ERROR: no manifest given. Usage: $0 <manifest-path from sweep-outbox.sh>" >&2
+    exit 2
+fi
+LEDGER="${LEDGER:-$(dirname "$MANIFEST")/ledger.json}"
 FEEDBACK_LOG="${FEEDBACK_LOG:-$REPO_ROOT/agent-feedback.jsonl}"
 NO_VAULT="${NO_VAULT:-0}"
 NO_AGGREGATE="${NO_AGGREGATE:-0}"
@@ -68,6 +74,23 @@ else
         project="$(jq -r '.project // "unknown"' <<< "$content")"
         mtype="$(jq -r '.type // "unknown"' <<< "$content")"
         summary="$(jq -r '.summary // ""' <<< "$content")"
+
+        # files[] gets attached to the relay. Flag paths that are missing (they
+        # would fail silently at attach time) or outside the sender's project
+        # dir (Lilo must not attach those: a steered PM could list secrets).
+        project_dir="$(cd "$(dirname "$path")/../.." 2>/dev/null && pwd -P)"
+        while IFS= read -r f; do
+            [ -n "$f" ] || continue
+            if [ ! -e "$f" ]; then
+                err "files entry missing on disk: $f (in $path)"
+                continue
+            fi
+            real="$(cd "$(dirname "$f")" 2>/dev/null && pwd -P)/$(basename "$f")"
+            case "$real" in
+                "$project_dir"/*) ;;
+                *) err "files entry outside project dir, do not attach: $f (in $path)" ;;
+            esac
+        done < <(jq -r 'if (.files | type) == "array" then .files[] | strings else empty end' <<< "$content")
 
         if [ "$NO_VAULT" != "1" ]; then
             if ! ./scripts/mirror-outbox-to-vault.sh "$path" >/dev/null 2>&1; then
@@ -160,8 +183,10 @@ jq -n \
     --arg done_count "$done_count" \
     --arg feedback_appended "$feedback_appended" \
     --argjson aggregation "$aggregation" \
+    --arg manifest_path "$MANIFEST" \
     --rawfile errors_raw <(cat "$ERRORS_TMP" 2>/dev/null; printf '') '
     {
+        manifest_path: $manifest_path,
         messages: $messages_arr,
         quarantined: $quarantine_arr,
         quarantined_report_entries: $quarantine_entries_arr,

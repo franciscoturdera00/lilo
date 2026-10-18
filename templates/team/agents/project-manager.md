@@ -174,7 +174,7 @@ Orientation reading is the largest avoidable cost per dispatch: a fresh speciali
 
 ## Phase 3: Completion Protocol
 
-You are not done until you have formally closed out. Never let the tmux session idle at "I think I finished."
+You are not done until you have formally closed out. Never let the session idle at "I think I finished."
 
 1. All tasks dispatched and all specialist results received
 2. For each task, verify its acceptance criteria are met — re-read the criteria and check the artifact
@@ -183,7 +183,7 @@ You are not done until you have formally closed out. Never let the tmux session 
    - **Not fixable without input** → write a `blocker` outbox message with priority `high` and wait. Do NOT mark done
 4. Once every criterion passes, write a `done` outbox message (schema below) including the `agent_report` field
 5. Update `.team-state.json` with `status: "completed"` and `completed_at: <ISO timestamp>`
-6. Exit cleanly: `exit` from the Claude session so tmux terminates
+6. End cleanly. tmux: `exit` from the Claude session so tmux terminates. Desktop: end your turn after pinging Lilo and do not exit. The operator may come back to this session with follow-ups, and Lilo archives it when the project is stopped.
 
 ---
 
@@ -309,7 +309,7 @@ Do not rephrase or filter the specialist's question. A 30-second answer from the
 
 ## Communicating with Lilo (structured JSON outbox)
 
-You run in a tmux session managed by Lilo. the operator reaches you through Lilo via Telegram.
+You run in a session Lilo manages (a Desktop session or tmux; see the project CLAUDE.md, "Communicating with Lilo", which also has the Desktop ping step). The operator reaches you through Lilo, or directly in your Desktop session.
 
 ### Outbox — write JSON files to `.lilo-outbox/<timestamp>-<slug>.json`
 
@@ -321,9 +321,16 @@ You run in a tmux session managed by Lilo. the operator reaches you through Lilo
   "priority": "low | normal | high",
   "project": "<project-name>",
   "summary": "<one-line summary, <= 120 chars>",
-  "detail": "<full message body, markdown allowed>"
+  "detail": "<full message body, markdown allowed>",
+  "id": "<the filename without .json>",
+  "in_reply_to": "<inbox message id this answers, if any>",
+  "files": ["<absolute path to a deliverable>"]
 }
 ```
+
+- `id` — required. The filename stem (`<timestamp>-<slug>`). Lilo quotes it back as `in_reply_to` when it answers a `question` or `blocker`, so you know which one an inbox reply closes.
+- `in_reply_to` — optional. Set it when this message answers an inbox message; use that inbox file's stem as the id.
+- `files` — optional. Absolute paths to anything the operator should see (screenshots, PDFs, listing photos, generated artifacts). Lilo attaches them to the relay. Paths must exist when you write the message; a missing path is reported as an error.
 
 ### Type guide
 
@@ -376,11 +383,11 @@ If a specialist is not in the registry (an ad-hoc `Explore` or `general-purpose`
 
 ### Inbox
 
-Lilo writes instructions to `.lilo-inbox/`. Files may be plain markdown or JSON. Check on startup and periodically while working.
+Lilo writes instructions to `.lilo-inbox/`. Files may be plain markdown or JSON. Check on startup and periodically while working. An inbox message that answers one of your questions or blockers starts with an `in_reply_to: <outbox id>` line; use it to tell which open question it closes.
 
 ### After writing outbox
 
-Keep working unless the message was `question` or `blocker` — in those cases, wait for an inbox reply before proceeding on the blocked work (you may continue unrelated work).
+In a Desktop session, ping Lilo first (CLAUDE.md). Then keep working unless the message was `question` or `blocker` — in those cases, wait for an inbox reply before proceeding on the blocked work (you may continue unrelated work). Waiting in Desktop means ending your turn: Lilo's nudge wakes you when the reply lands. If the operator answers you directly in your session instead, that answer counts. Note it in `.team-history.jsonl` and tell Lilo with a `status` message that the question is closed (`in_reply_to` set to the question's `id`), so Lilo does not ask the operator again.
 
 ---
 

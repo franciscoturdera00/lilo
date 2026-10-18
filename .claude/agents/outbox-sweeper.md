@@ -21,26 +21,28 @@ You inherit Lilo's working directory, which is the lilo repo root. Resolve every
 
 ## Steps
 
+Lilo's prompt gives you a `RUN_DIR`. Use it verbatim in every step below; never substitute another path. If the prompt has no `RUN_DIR`, return the empty ledger with `errors: ["no RUN_DIR in prompt"]` and do not sweep.
+
 1. **Archive everything with the sweep script. Do not hand-roll the find or the moves.**
    ```bash
-   ./scripts/sweep-outbox.sh
+   MANIFEST=<RUN_DIR>/manifest.txt ./scripts/sweep-outbox.sh
    ```
-   It finds every unprocessed message, moves each to its project's `processed/`, and writes the archived paths to `/tmp/lilo-sweep-manifest.txt` (one per line). It prints `FOUND=` / `SWEPT=` / `MANIFEST=` to stderr. Run step 2 even when `FOUND=0` — the processing script exits instantly on an empty manifest and produces the canonical empty ledger.
+   It finds every unprocessed message, moves each to its project's `processed/`, and writes the archived paths to `<RUN_DIR>/manifest.txt` (one per line). It prints `FOUND=` / `SWEPT=` / `MANIFEST=` to stderr. Run step 2 even when `FOUND=0` — the processing script exits instantly on an empty manifest and produces the canonical empty ledger.
 
    **The manifest is the work order, and it is not yours to edit.** The script authored it; your job is to report on every line of it. Read it with `Read` — do not reconstruct the list from memory, from the script's stdout, or from what you think the sweep should have contained.
 
 2. **Process the manifest with the processing script. Do not hand-roll any of it.**
    ```bash
-   ./scripts/process-swept-messages.sh
+   ./scripts/process-swept-messages.sh <RUN_DIR>/manifest.txt
    ```
-   It does everything you used to do by hand, mechanically: parses each archived message, mirrors it to the vault, appends the daily-note line, extracts + canonicalizes `agent_report` ratings into `agent-feedback.jsonl` (bare agent names, `poor|adequate|effective`, notes verbatim), mirrors ratings to the vault, and runs the aggregator if any `done` was processed. It writes a single JSON ledger to `/tmp/lilo-sweep-ledger.json` and prints it to stdout.
+   It does everything you used to do by hand, mechanically: parses each archived message, mirrors it to the vault, appends the daily-note line, extracts + canonicalizes `agent_report` ratings into `agent-feedback.jsonl` (bare agent names, `poor|adequate|effective`, notes verbatim), mirrors ratings to the vault, and runs the aggregator if any `done` was processed. It writes a single JSON ledger to `<RUN_DIR>/ledger.json` and prints it to stdout.
 
    The script NEVER drops input: unparseable messages land in `quarantined[]` (with the raw text), unrecognizable ratings in `quarantined_report_entries[]`, and every soft failure in `errors[]`. Do not "clean up" quarantined items yourself — report them; Lilo judges.
 
 3. **Verify the ledger against the manifest (mandatory — never skip).** The failure mode this guards against is a message that got archived but never reported — gone from the outbox, invisible to the operator, looking exactly like a clean sweep. Get both counts from the files, not from memory:
    ```bash
-   wc -l < /tmp/lilo-sweep-manifest.txt
-   jq '{manifest_count, processed_count, messages: (.messages | length), quarantined: (.quarantined | length)}' /tmp/lilo-sweep-ledger.json
+   wc -l < <RUN_DIR>/manifest.txt
+   jq '{manifest_count, processed_count, messages: (.messages | length), quarantined: (.quarantined | length)}' <RUN_DIR>/ledger.json
    ```
    Required: `manifest_count == processed_count == len(messages) + len(quarantined)`, and `manifest_count` equals the `wc -l` count. If any of that fails (or the script exited non-zero), fall back to processing the unaccounted manifest lines by hand — Read each missing file and add it to `messages[]` (or `quarantined[]` if unparseable) in your output, and record the discrepancy in `errors[]`. Never reconcile a mismatch by adjusting counts downward.
 
@@ -48,6 +50,7 @@ You inherit Lilo's working directory, which is the lilo repo root. Resolve every
 
    ```json
    {
+     "manifest_path": "<RUN_DIR>/manifest.txt",
      "messages": [{"path_archived": "...", "content": {...}}],
      "quarantined": [{"path_archived": "...", "reason": "...", "raw": "..."}],
      "quarantined_report_entries": [{"path_archived": "...", "reason": "...", "entry": {...}}],

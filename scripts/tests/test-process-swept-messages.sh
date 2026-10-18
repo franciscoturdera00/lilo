@@ -83,6 +83,71 @@ MANIFEST="$TMP/empty.txt" LEDGER="$TMP/ledger-empty.json" FEEDBACK_LOG="$TMP/fee
 assert "exit 0 on empty manifest" "$?" "0"
 assert "empty ledger counts" "$(jq -r '[.manifest_count, .processed_count, (.messages|length)] | join(",")' "$TMP/ledger-empty.json")" "0,0,0"
 
+# --- manifest path handling + files[] -----------------------------------------
+
+"$SCRIPT" > /dev/null 2>&1
+assert "exit 2 with no manifest given" "$?" "2"
+
+mkdir -p "$TMP/run" "$TMP/projC/.lilo-outbox/processed"
+touch "$TMP/projC/real.png" "$TMP/outside.txt"
+cat > "$TMP/projC/.lilo-outbox/processed/m5.json" <<EOF
+{"type":"done","priority":"high","project":"projC","summary":"with files","detail":"d","id":"m5","files":["$TMP/projC/real.png","$TMP/projC/ghost.png","$TMP/outside.txt"]}
+EOF
+printf '%s\n' "$TMP/projC/.lilo-outbox/processed/m5.json" > "$TMP/run/manifest.txt"
+FEEDBACK_LOG="$TMP/feedback3.jsonl" NO_VAULT=1 NO_AGGREGATE=1 \
+    "$SCRIPT" "$TMP/run/manifest.txt" > /dev/null 2>&1
+assert "exit 0 with positional manifest" "$?" "0"
+R="$TMP/run/ledger.json"
+assert "ledger defaults next to manifest" "$([ -f "$R" ] && echo yes)" "yes"
+assert "ledger records manifest_path" "$(jq -r '.manifest_path' "$R")" "$TMP/run/manifest.txt"
+assert "files passed through in content" "$(jq -r '.messages[0].content.files | length' "$R")" "3"
+assert "missing files entry reported" "$(jq -r '[.errors[] | select(test("ghost.png"))] | length' "$R")" "1"
+assert "in-project files entry not reported" "$(jq -r '[.errors[] | select(test("real.png"))] | length' "$R")" "0"
+assert "outside-project files entry reported" "$(jq -r '[.errors[] | select(test("outside project.*outside.txt"))] | length' "$R")" "1"
+
+# --- sweep-outbox.sh: per-run manifest, in a throwaway workspace ---------------
+# Copy the script into a fake workspace so it never touches real outboxes.
+
+WS="$TMP/ws"
+mkdir -p "$WS/lilo/scripts" "$WS/projX/.lilo-outbox/processed"
+cp "$REPO_ROOT/scripts/sweep-outbox.sh" "$WS/lilo/scripts/"
+echo '{"type":"status"}' > "$WS/projX/.lilo-outbox/a.json"
+echo '{"type":"status"}' > "$WS/projX/.lilo-outbox/processed/old.json"
+
+out1="$(cd "$WS/lilo" && TMPDIR="$TMP" ./scripts/sweep-outbox.sh 2>&1 >/dev/null)"
+assert "sweep exit 0" "$?" "0"
+m1="$(sed -n 's/^MANIFEST=//p' <<< "$out1")"
+is_run_path=no
+[[ "$m1" == "$TMP"/lilo-sweep.*/manifest.txt ]] && is_run_path=yes
+assert "default manifest is a per-run mktemp path" "$is_run_path" "yes"
+assert "manifest lists the one pending message" "$(wc -l < "$m1" | tr -d ' ')" "1"
+
+out2="$(cd "$WS/lilo" && TMPDIR="$TMP" ./scripts/sweep-outbox.sh 2>&1 >/dev/null)"
+m2="$(sed -n 's/^MANIFEST=//p' <<< "$out2")"
+assert "empty sweep still prints MANIFEST" "$([ -n "$m2" ] && echo yes)" "yes"
+assert "second run gets a different manifest" "$([ "$m1" != "$m2" ] && echo yes)" "yes"
+assert "first run's manifest untouched by second" "$(wc -l < "$m1" | tr -d ' ')" "1"
+
+out3="$(cd "$WS/lilo" && MANIFEST="$TMP/explicit.txt" ./scripts/sweep-outbox.sh 2>&1 >/dev/null)"
+assert "explicit MANIFEST honored" "$(sed -n 's/^MANIFEST=//p' <<< "$out3")" "$TMP/explicit.txt"
+
+# PROJECT filter: only the named sibling is swept.
+mkdir -p "$WS/projY/.lilo-outbox"
+echo '{"type":"status"}' > "$WS/projX/.lilo-outbox/b.json"
+echo '{"type":"status"}' > "$WS/projY/.lilo-outbox/c.json"
+out4="$(cd "$WS/lilo" && PROJECT=projY MANIFEST="$TMP/proj.txt" ./scripts/sweep-outbox.sh 2>&1 >/dev/null)"
+assert "PROJECT sweep exit 0" "$?" "0"
+assert "PROJECT sweep took only projY" "$(cat "$TMP/proj.txt")" "../projY/.lilo-outbox/processed/c.json"
+assert "other project left pending" "$([ -f "$WS/projX/.lilo-outbox/b.json" ] && echo yes)" "yes"
+(cd "$WS/lilo" && PROJECT=../etc MANIFEST="$TMP/bad.txt" ./scripts/sweep-outbox.sh >/dev/null 2>&1)
+assert "PROJECT with a slash rejected" "$?" "1"
+rm -f "$TMP/bad.txt"
+(cd "$WS/lilo" && PROJECT=nope MANIFEST="$TMP/bad.txt" ./scripts/sweep-outbox.sh >/dev/null 2>&1)
+assert "unknown PROJECT rejected" "$?" "1"
+assert "rejected PROJECT leaves no manifest" "$([ -e "$TMP/bad.txt" ] && echo exists || echo none)" "none"
+(cd "$WS/lilo" && PROJECT=lilo MANIFEST="$TMP/bad.txt" ./scripts/sweep-outbox.sh >/dev/null 2>&1)
+assert "PROJECT=lilo (self) rejected" "$?" "1"
+
 # --- result -------------------------------------------------------------------
 
 echo

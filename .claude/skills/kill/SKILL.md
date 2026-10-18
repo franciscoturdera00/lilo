@@ -1,6 +1,6 @@
 ---
 name: kill
-description: Pre-exit scan for this Lilo session — save memory-worthy lessons silently, commit and push routine changes, branch off anything risky. Use when the operator says "/kill", "kill the session", "wrap up", or signals the session is ending. NOT for killing PM tmux sessions.
+description: Pre-exit scan for this Lilo session — save memory-worthy lessons silently, commit and push routine changes, branch off anything risky. Use when the operator says "/kill", "kill the session", "wrap up", or signals the session is ending. NOT for stopping PM sessions (that is `/pm stop`).
 ---
 
 # kill

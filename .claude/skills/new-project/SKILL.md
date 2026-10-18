@@ -1,6 +1,6 @@
 ---
 name: new-project
-description: Scaffold a new Claude Code project as a sibling of the orchestrator repo. Use when the operator says "new project <name>", "start a project called X", "spin up X", "scaffold X", or anything equivalent. All projects scaffold with the team template (PM + specialist agents) and auto-launch the PM in tmux. Accepts an optional `--profile mvp|work` to layer a config overlay on top of the base team template (default: `mvp`). Use `--profile work` for paid-client projects that need tighter permissions (deny list on personal connectors and destructive ops).
+description: Scaffold a new Claude Code project as a sibling of the orchestrator repo. Use when the operator says "new project <name>", "start a project called X", "spin up X", "scaffold X", or anything equivalent. All projects scaffold with the team template (PM + specialist agents) and auto-launch the PM (a Desktop session when Lilo runs in the desktop app, else tmux). Accepts an optional `--profile mvp|work` to layer a config overlay on top of the base team template (default: `mvp`). Use `--profile work` for paid-client projects that need tighter permissions (deny list on personal connectors and destructive ops).
 ---
 
 # new-project
@@ -50,7 +50,7 @@ find "$DEST" -type f -not -path '*/.git/*' -exec perl -pi -e "s/\{\{PROJECT_NAME
 Verify: `ls -la ../<name>` and confirm `.claude/agents/` and `CLAUDE.md` are present. For `work` profile, also confirm `.claude/settings.json` contains the deny list (`grep -q '"deny"' "$DEST"/.claude/settings.json && grep -q 'plugin_telegram' "$DEST"/.claude/settings.json`).
 
 Then invoke the `team-ops` skill for the post-scaffold launch steps
-(inbox/outbox dirs, initial task file, tmux session, PM kickoff). **Pass the profile through** — `team-ops` reads `templates/overlays/<profile>/launch.flags` to assemble the tmux launch command, so the same flags are not hardcoded in two places.
+(inbox/outbox dirs, initial task file, PM launch and kickoff on the right transport). **Pass the profile through** — in tmux mode `team-ops` reads `templates/overlays/<profile>/launch.flags` to assemble the launch command, so the same flags are not hardcoded in two places.
 
-Report back that the project is ready and that the PM is running in the
-`<name>` tmux session. If profile is `work`, additionally remind the operator that they will likely want to set repo-local `git config user.email` to their work address inside any cloned work repos under the project dir — the PM cannot infer it.
+Report back that the project is ready and where the PM runs (a link to its
+Desktop session, or the `<name>` tmux session). If profile is `work`, additionally remind the operator that they will likely want to set repo-local `git config user.email` to their work address inside any cloned work repos under the project dir — the PM cannot infer it.

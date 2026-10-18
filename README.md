@@ -116,8 +116,8 @@ the troubleshooting move if messages aren't getting through.
 `USER.md` is the only file you customise per operator (name, Telegram
 `chat_id`, terseness, etc.) and is gitignored.
 
-**Smoke test:** `status` lists projects + tmux sessions. `new project
-smoke-test` scaffolds and launches a PM in tmux; `nuke smoke-test`
+**Smoke test:** `status` lists projects + live PMs. `new project
+smoke-test` scaffolds and launches a PM; `nuke smoke-test`
 cleans up.
 
 ## Operator skills
@@ -132,8 +132,8 @@ registered tool action before falling back to writing custom logic.
 | Skill | Phrase | What it does |
 |-------|--------|--------------|
 | [`bootstrap`](.claude/skills/bootstrap/) | `bootstrap` | First-run setup walkthrough |
-| [`new-project`](.claude/skills/new-project/) | `new project <name>` | Scaffolds a sibling, auto-launches PM tmux. `--profile mvp\|work` picks an overlay. |
-| [`pm`](.claude/skills/pm/) | `pm`, `pm start X`, `pm stop X` | Status, or start/stop a PM tmux session |
+| [`new-project`](.claude/skills/new-project/) | `new project <name>` | Scaffolds a sibling, auto-launches the PM (Desktop session in the desktop app, tmux from the CLI). `--profile mvp\|work` picks an overlay. |
+| [`pm`](.claude/skills/pm/) | `pm`, `pm start X`, `pm stop X` | Status, or start/stop a PM session (Desktop or tmux) |
 | [`sync`](.claude/skills/sync/) | `sync` | Sweep outboxes, refresh dashboard if anything queued |
 | [`poll`](.claude/skills/poll/) | `poll on` / `poll off` | Toggle the recurring `/sync` cron (off by default) |
 | [`find-agent`](.claude/skills/find-agent/) | `find an agent for <role>` | Vet + import a specialist into the registry |

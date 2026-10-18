@@ -14,7 +14,13 @@ ROOT="$(cd "$LILO_ROOT/.." && pwd)"
 OUT_MD="$LILO_ROOT/pipeline.md"
 OUT_JSON="$LILO_ROOT/pipeline.json"
 
-LIVE_SESSIONS="$(tmux ls 2>/dev/null | cut -d: -f1 | sort -u || true)"
+# Live PMs: tmux sessions plus Desktop PMs registered in pm-sessions.json.
+# Desktop entries are removed on /pm stop and nuke, so a registered entry
+# counts as live (the script cannot query the desktop app).
+LIVE_SESSIONS="$( {
+  tmux ls 2>/dev/null | cut -d: -f1
+  jq -r 'to_entries[] | select(.value.transport == "desktop") | .key' "$LILO_ROOT/pm-sessions.json" 2>/dev/null
+} | sort -u || true)"
 
 declare -a active=() paused=() done_p=() no_state=()
 
