@@ -59,7 +59,7 @@ Lilo sends instructions back by writing to `.lilo-inbox/`. Run `/check-inbox` to
 
 ### Pinging Lilo (Desktop sessions only)
 
-If you have the `SendMessage` tool, you are a Desktop session: after writing each outbox file, tell Lilo it exists. Read Lilo's current session id fresh each time (Lilo sessions get replaced) and send one line:
+If `.lilo-transport` in the project root says `desktop`, you are a Desktop session: after writing each outbox file, tell Lilo it exists. (Do not infer this from having a `SendMessage` tool: CLI sessions have it too.) Read Lilo's current session id fresh each time (Lilo sessions get replaced) and send one line:
 
 ```bash
 cat ../lilo/.lilo-session-id

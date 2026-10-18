@@ -74,7 +74,7 @@ PMs find Lilo through `./.lilo-session-id` (gitignored, one line: Lilo's `local_
 
 #### desktop: launch and kick off
 
-1. Refresh `.lilo-session-id`.
+1. Refresh `.lilo-session-id`, and `echo desktop > ../<name>/.lilo-transport`. The PM reads that file to know it must ping Lilo; unlike the kickoff prompt, it survives compaction.
 2. `mcp__ccd_session__start_session` with:
    - `initiation: "user_asked"` (the operator asked for the project or the PM), `context: "fresh"`, `cwd: <absolute path of ../<name>>`, `name: <name>`, `title: "<name> PM"`
    - `permission_mode: "auto"`. Keep PMs in the same permission mode as Lilo: a session in a different mode holds cross-session messages for manual approval, which silently stalls both directions.
@@ -109,7 +109,7 @@ Two things wake Lilo about a PM: a `<cross-session-message>` ping the PM sends a
    tmux send-keys -t <name> Enter
    ```
    After nudging, verify submission with `tmux capture-pane -t <name> -p -S -10 | grep -i 'determining\|✳\|✶\|esc to interrupt'`. If the prompt is still sitting on the input line (`❯ Run /check-inbox…`) with no "Determining..." indicator, send another `Enter`.
-3. Record `{transport: "tmux", session_id: null}` in `pm-sessions.json`.
+3. Record `{transport: "tmux", session_id: null}` in `pm-sessions.json`, and `echo tmux > ../<name>/.lilo-transport`.
 
 #### tmux: further instructions
 

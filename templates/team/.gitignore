@@ -2,6 +2,7 @@
 .lilo-inbox/
 .lilo-outbox/
 .team-state.json
+.lilo-transport
 # .team-history.jsonl is intentionally NOT ignored — it's durable project memory across resumes.
 
 # Secrets / local env

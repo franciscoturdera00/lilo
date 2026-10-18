@@ -11,9 +11,9 @@ Operator is closing this Lilo session. Save what'd be lost. Take action — don'
 
 Run these in a **single message with multiple tool calls** so they execute in parallel. The point: the heavy reads (outbox JSONs, full `git diff`) burn subagent context, not Lilo's.
 
-1. **Agent: `outbox-sweeper`** — sweep `../*/.lilo-outbox/*.json` and report queued messages.
+1. **`/sweep`** — follow the `sweep` skill (it creates the `RUN_DIR` the sweeper requires and audits the manifest). Dispatching `outbox-sweeper` directly without a `RUN_DIR` makes it refuse to sweep.
 2. **Agent: `security-reviewer`** — scan the uncommitted diff for secrets, credential paths, and other risk markers (see below). Pass it the full risk-marker list and ask for a JSON-shaped report: `{risky: [{path, reason}], skip: [paths]}`.
-3. **Bash (batched):** `git status -s && git diff --stat && tmux ls 2>/dev/null || true` — trivial reads, run inline.
+3. **Bash (batched):** `git status -s && git diff --stat && tmux ls 2>/dev/null; cat pm-sessions.json 2>/dev/null || true` — trivial reads, run inline.
 
 While those run, scan **this session's transcript** for memory-worthy moments — corrections, validated unusual choices, hardware/external-system gotchas, surprising project facts. Cross-check against `MEMORY.md`. Save new ones directly; no permission needed. (Memory has to stay in the parent — subagents don't see Lilo's transcript.)
 
