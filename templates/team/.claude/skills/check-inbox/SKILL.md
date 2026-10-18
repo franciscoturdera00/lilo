@@ -1,6 +1,6 @@
 ---
 name: check-inbox
-description: Read new messages from Lilo in .lilo-inbox/, summarize them into the working plan, and archive. Use at session start, when Lilo nudges you via tmux, or whenever you suspect new instructions have arrived. Plumbing only — does not act on the messages, that's the PM's judgment call.
+description: Read new messages from Lilo in .lilo-inbox/, summarize them into the working plan, and archive. Use at session start, when Lilo nudges you (tmux prompt or Desktop message), or whenever you suspect new instructions have arrived. Plumbing only — does not act on the messages, that's the PM's judgment call.
 user-invocable: true
 allowed-tools:
   - Read
@@ -29,7 +29,7 @@ Scan `.lilo-inbox/` for unread messages from Lilo, read them in order, then arch
 2. If the list is empty, say `Inbox empty.` and stop.
 3. For each file in timestamp order:
    - Read the full file
-   - Print a one-line summary: `<filename>: <first meaningful line or title>`
+   - Print a one-line summary: `<filename>: <first meaningful line or title>`. If the file starts with `in_reply_to: <id>`, include it (`(answers <id>)`) — it is the outbox question or blocker this message closes
    - If the message is long, also print a 2-3 bullet summary of the ask
 4. After reading every file, create `.lilo-inbox/processed/` if needed and move all read files into it:
    ```bash
@@ -41,7 +41,7 @@ Scan `.lilo-inbox/` for unread messages from Lilo, read them in order, then arch
 ## When to run
 
 - **On session start** (first thing after reading `.team-state.json` if in team mode).
-- **When Lilo nudges you** via `tmux send-keys` — any message saying "check your inbox" or similar.
+- **When Lilo nudges you**, via `tmux send-keys` or a Desktop message from Lilo — any message saying "check your inbox" or similar. The nudge carries no instructions; the inbox file does.
 - **After long operations** that may have spanned several minutes — Lilo may have queued something while you were busy.
 - **Never on a loop.** The inbox is async but not high-frequency. Polling it wastes tokens. Rely on explicit nudges and session-start checks.
 

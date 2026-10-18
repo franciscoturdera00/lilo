@@ -11,24 +11,51 @@
 # errored and the outbox was empty afterward, so every "did it work" check
 # passed. The manifest exists so that can never be invisible again.
 #
-# Usage: ./scripts/sweep-outbox.sh   (run from the lilo repo root)
-# Output: writes $MANIFEST, prints the archived paths, exits non-zero on trouble.
+# Usage: MANIFEST=<run-dir>/manifest.txt ./scripts/sweep-outbox.sh
+#   (run from the lilo repo root). Without MANIFEST, a fresh per-run dir is
+#   created with mktemp. Never share a manifest path between runs: two sweeps
+#   writing one file clobber each other's work-list.
+#   PROJECT=<name> limits the sweep to ../<name>/.lilo-outbox (event-driven
+#   sweeps after a PM pings Lilo). Unset sweeps every sibling.
+# Output: writes $MANIFEST, prints MANIFEST=<path> to stderr (always, even on
+# an empty sweep) and the archived paths to stdout, exits non-zero on trouble.
 
 set -uo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT" || exit 1
 
-MANIFEST="${MANIFEST:-/tmp/lilo-sweep-manifest.txt}"
-: > "$MANIFEST"
+# Validate PROJECT before creating or announcing a manifest: a bad name must
+# fail loudly, never leave an empty manifest that reads like a clean sweep.
+if [ -n "${PROJECT:-}" ]; then
+    case "$PROJECT" in
+        */*|.|..|"$(basename "$REPO_ROOT")")
+            echo "ERROR: PROJECT must be a bare sibling project name, got '$PROJECT'" >&2; exit 1 ;;
+    esac
+    if [ ! -d "../$PROJECT" ]; then
+        echo "ERROR: no sibling project '../$PROJECT'" >&2
+        exit 1
+    fi
+fi
+
+if [ -z "${MANIFEST:-}" ]; then
+    RUN_DIR="$(mktemp -d "${TMPDIR:-/tmp}/lilo-sweep.XXXXXX")" || { echo "ERROR: mktemp failed" >&2; exit 1; }
+    MANIFEST="$RUN_DIR/manifest.txt"
+fi
+: > "$MANIFEST" || { echo "ERROR: cannot write $MANIFEST" >&2; exit 1; }
+echo "MANIFEST=$MANIFEST" >&2
 
 status=0
 found=0
 swept=0
 
 # Pin the work-list up front. Sorted so runs are reproducible.
-pending="$(find .. -mindepth 3 -maxdepth 3 -path "*/.lilo-outbox/*.json" \
-    -not -path "*/processed/*" -not -path "$REPO_ROOT/*" 2>/dev/null | sort)"
+if [ -n "${PROJECT:-}" ]; then
+    pending="$(find "../$PROJECT/.lilo-outbox" -mindepth 1 -maxdepth 1 -name '*.json' -type f 2>/dev/null | sort)"
+else
+    pending="$(find .. -mindepth 3 -maxdepth 3 -path "*/.lilo-outbox/*.json" \
+        -not -path "*/processed/*" -not -path "$REPO_ROOT/*" 2>/dev/null | sort)"
+fi
 
 if [ -z "$pending" ]; then
     echo "FOUND=0" >&2
@@ -71,7 +98,6 @@ done <<< "$pending"
 
 echo "FOUND=$found" >&2
 echo "SWEPT=$swept" >&2
-echo "MANIFEST=$MANIFEST" >&2
 
 if [ "$found" -ne "$swept" ]; then
     echo "ERROR: incomplete sweep — found $found, archived $swept" >&2

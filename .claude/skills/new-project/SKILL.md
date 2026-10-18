@@ -1,6 +1,6 @@
 ---
 name: new-project
-description: Scaffold a new Claude Code project as a sibling of the orchestrator repo. Use when the operator says "new project <name>", "start a project called X", "spin up X", "scaffold X", or anything equivalent. All projects scaffold with the team template (PM + specialist agents) and auto-launch the PM in tmux. Accepts an optional `--profile mvp|work` to layer a config overlay on top of the base team template (default: `mvp`). Use `--profile work` for paid-client projects that need tighter permissions (deny list on personal connectors and destructive ops).
+description: Scaffold a new Claude Code project as a sibling of the orchestrator repo. Use when the operator says "new project <name>", "start a project called X", "spin up X", "scaffold X", or anything equivalent. All projects scaffold with the team template (PM + specialist agents) and auto-launch the PM (a Desktop session when Lilo runs in the desktop app, else tmux).
 ---
 
 # new-project
@@ -12,21 +12,15 @@ relay, the whole setup. There is no single-session option.
 ## Inputs
 
 - `<name>` — project directory name (slug-style, no spaces)
-- `--profile <mvp|work>` — optional config overlay (default: `mvp`)
-  Both profiles launch with `--permission-mode auto` (Claude self-vets each tool call, auto-approving safe ones and blocking risky ones); they differ only in the project config the overlay copies in:
-  - `mvp` — base team template as-is: permissive Bash/MCP allowlist, no deny list (account connectors available). Right for personal/experimental projects.
-  - `work` — tighter `settings.json`: work connectors allowed (HubSpot/GitHub/ClickUp/Figma), personal connectors (Telegram/Notion/Gmail/Drive/Calendar/Supabase/Netlify/lilo-tools/computer-use/picarx) explicitly denied, `git push` / `npm publish` / destructive ops on the deny list, ssh/scp/rsync denied. Right for paid-client work.
 
-If the operator describes the project context but doesn't name a profile, infer it: client work → `work`, anything else → `mvp`. Confirm with the operator before scaffolding if it's ambiguous.
+There is one project config: the team template, launched in auto permission mode (Claude vets each tool call itself), with every connector available.
 
 ## Steps
 
-Run from the orchestrator repo root, substituting `<name>` and `<profile>`:
+Run from the orchestrator repo root, substituting `<name>`:
 
 ```bash
 DEST=../<name>
-PROFILE=<profile>   # mvp or work; default mvp
-OVERLAY=templates/overlays/$PROFILE
 
 # 1. Base scaffold
 mkdir -p "$DEST"
@@ -37,20 +31,15 @@ cp -R templates/team/. "$DEST"/
 # registry in the team-ops launch step (single source of truth).
 rm -rf "$DEST"/.claude/agent-registry
 
-# 2. Apply overlay (if the profile has a project/ subtree)
-if [ -d "$OVERLAY/project" ]; then
-  cp -R "$OVERLAY/project/." "$DEST"/
-fi
-
-# 3. Substitute placeholder in every copied file. perl -pi is cross-platform
+# 2. Substitute placeholder in every copied file. perl -pi is cross-platform
 # (sed -i differs between BSD/macOS and GNU/Linux).
 find "$DEST" -type f -not -path '*/.git/*' -exec perl -pi -e "s/\{\{PROJECT_NAME\}\}/<name>/g" {} +
 ```
 
-Verify: `ls -la ../<name>` and confirm `.claude/agents/` and `CLAUDE.md` are present. For `work` profile, also confirm `.claude/settings.json` contains the deny list (`grep -q '"deny"' "$DEST"/.claude/settings.json && grep -q 'plugin_telegram' "$DEST"/.claude/settings.json`).
+Verify: `ls -la ../<name>` and confirm `.claude/agents/` and `CLAUDE.md` are present.
 
 Then invoke the `team-ops` skill for the post-scaffold launch steps
-(inbox/outbox dirs, initial task file, tmux session, PM kickoff). **Pass the profile through** — `team-ops` reads `templates/overlays/<profile>/launch.flags` to assemble the tmux launch command, so the same flags are not hardcoded in two places.
+(inbox/outbox dirs, initial task file, PM launch and kickoff on the right transport).
 
-Report back that the project is ready and that the PM is running in the
-`<name>` tmux session. If profile is `work`, additionally remind the operator that they will likely want to set repo-local `git config user.email` to their work address inside any cloned work repos under the project dir — the PM cannot infer it.
+Report back that the project is ready and where the PM runs (a link to its
+Desktop session, or the `<name>` tmux session). For client work, remind the operator to set repo-local `git config user.email` to their work address inside any cloned work repos under the project dir — the PM cannot infer it.

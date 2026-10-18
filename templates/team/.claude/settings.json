@@ -7,6 +7,8 @@
       "Read(./**)",
       "Read(../lilo/templates/team/.claude/agent-registry/**)",
       "Read(../lilo/docs/**)",
+      "Read(../lilo/.lilo-session-id)",
+      "SendMessage",
       "Bash(mkdir:*)",
       "Bash(ln:*)",
       "Bash(cp:*)",
@@ -100,6 +102,8 @@
       "mcp__claude_ai_Notion__*",
       "mcp__claude_ai_Figma__*",
       "mcp__claude_ai_Netlify__*",
+      "mcp__claude_ai_HubSpot__*",
+      "mcp__claude_ai_ClickUp__*",
       "mcp__lilo-tools__*",
       "mcp__plugin_telegram_telegram__*"
     ],

@@ -55,3 +55,7 @@ tools/mcp-bridge/.installed_reqs/
 # Tools framework venv
 tools/mcp-bridge/.venv/
 .claude/scratchpad_*
+
+# Desktop transport: PM session registry + Lilo's current session id (operator-specific, see team-ops)
+pm-sessions.json
+.lilo-session-id

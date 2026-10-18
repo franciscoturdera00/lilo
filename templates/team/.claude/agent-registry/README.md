@@ -102,7 +102,7 @@ Local, curated specialist definitions used by the project-manager agent before f
 
 ## Refinement loop
 
-The PM reports per-specialist performance in its `done` outbox message (`agent_report` field). Lilo aggregates these into `lilo/agent-feedback.jsonl` and refines registry definitions when an agent accumulates poor ratings. Do not hand-edit these files — let the feedback loop update them.
+The PM reports per-specialist performance in its `done` outbox message (`agent_report` field, bare registry names, `poor|adequate|effective`, reason in `notes`). Lilo's sweep appends these to `lilo/agent-feedback.jsonl`; a recency-weighted aggregator flags agents with recurring `poor` or `adequate` ratings, and Lilo refines those specs. Do not hand-edit these files — let the feedback loop update them.
 
 ## Provenance
 

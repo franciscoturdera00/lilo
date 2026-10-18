@@ -3,12 +3,14 @@
 **Lilo** is a long-running Claude Code session that encapsulates and
 manages your projects under a standardized framework. Each project
 lives as a sibling directory and runs its own **project-manager (PM)**
-— a Claude Code session in a tmux pane that dispatches specialist
-subagents, tracks state, and drives the work. The PM communicates with
+— a Claude Code session (a Claude desktop app session, or a tmux pane
+from the CLI) that dispatches specialist subagents, tracks state, and
+drives the work. The PM communicates with
 Lilo through a typed inbox/outbox protocol. Every project scaffolds
 from customizable templates — agent registry, permissions allowlist,
 MCP wiring, state files, and slash-command skills. Lilo handles
-scaffolding, lifecycle, periodic outbox sweeps, message routing to
+scaffolding, lifecycle, outbox sweeps (triggered by PM pings, on
+demand, or by opt-in polling), message routing to
 your phone or terminal, a shared MCP tool registry that exposes
 sibling projects as callable actions, and a Notion dashboard that
 mirrors live project status.
@@ -48,18 +50,31 @@ inside this repo.
       CLAUDE.md              # Lilo's operating manual (imports @USER.md)
       USER.md.example        # template for the operator profile
       USER.md                # gitignored — created during `bootstrap`
-      ARCHITECTURE.md        # tmux layout, team mode, MCP notes
+      ARCHITECTURE.md        # project mode, PM transports, MCP notes
       agent-feedback.jsonl   # aggregated PM ratings for registry agents
+      pm-sessions.json       # gitignored runtime: which PM runs where
+      .lilo-session-id       # gitignored runtime: Lilo's Desktop session id
       .mcp.recommended.json  # template; copy to .mcp.json on first clone
       .claude/
         agents/              # Lilo's curated subagents (incl. orchestrator-only
                              # outbox-sweeper + pipeline-syncer workers)
         settings.json        # permissions
         skills/              # see Operator skills
+      scripts/               # deterministic sweep, vault-mirror and render scripts (+ tests/)
       templates/
         team/                # PM scaffold: agent-registry, agents/, skills/, CLAUDE.md
 
 ## Running Lilo
+
+**Claude desktop app (recommended).** Open this repo in the Code tab
+and switch the session to **auto** permission mode. Lilo then launches
+each PM as its own linked Desktop session: you can open, watch or talk
+to any PM from the sidebar, PMs ping Lilo when they report, and Lilo
+nudges them directly, so no polling is needed. Keep the Mac awake
+(`caffeinate -is`, or the app's keep-awake setting) for long runs.
+
+**CLI.** PMs run in detached tmux sessions instead, and Lilo picks up
+their reports with `/sync` or `/poll`.
 
 **Prereq:** install the `claude-in-chrome` Chrome extension from
 https://claude.ai/download (or drop the `--chrome` flag below to skip
@@ -71,7 +86,7 @@ From this repo's root:
 caffeinate -is claude --channels plugin:telegram@claude-plugins-official --chrome
 ```
 
-- `caffeinate -is` — keeps the Mac awake so the cron loop keeps firing
+- `caffeinate -is` — keeps the Mac awake so polling and PMs keep running
 - `--channels plugin:telegram@...` — phone relay via the Telegram plugin
 - `--chrome` — pairs with the installed extension for browser automation
 
@@ -116,8 +131,8 @@ the troubleshooting move if messages aren't getting through.
 `USER.md` is the only file you customise per operator (name, Telegram
 `chat_id`, terseness, etc.) and is gitignored.
 
-**Smoke test:** `status` lists projects + tmux sessions. `new project
-smoke-test` scaffolds and launches a PM in tmux; `nuke smoke-test`
+**Smoke test:** `status` lists projects + live PMs. `new project
+smoke-test` scaffolds and launches a PM; `nuke smoke-test`
 cleans up.
 
 ## Operator skills
@@ -132,10 +147,10 @@ registered tool action before falling back to writing custom logic.
 | Skill | Phrase | What it does |
 |-------|--------|--------------|
 | [`bootstrap`](.claude/skills/bootstrap/) | `bootstrap` | First-run setup walkthrough |
-| [`new-project`](.claude/skills/new-project/) | `new project <name>` | Scaffolds a sibling, auto-launches PM tmux. `--profile mvp\|work` picks an overlay. |
-| [`pm`](.claude/skills/pm/) | `pm`, `pm start X`, `pm stop X` | Status, or start/stop a PM tmux session |
+| [`new-project`](.claude/skills/new-project/) | `new project <name>` | Scaffolds a sibling, auto-launches the PM (Desktop session in the desktop app, tmux from the CLI). |
+| [`pm`](.claude/skills/pm/) | `pm`, `pm start X`, `pm stop X` | Status, or start/stop a PM session (Desktop or tmux) |
 | [`sync`](.claude/skills/sync/) | `sync` | Sweep outboxes, refresh dashboard if anything queued |
-| [`poll`](.claude/skills/poll/) | `poll on` / `poll off` | Toggle the recurring `/sync` cron (off by default) |
+| [`poll`](.claude/skills/poll/) | `poll on` / `poll off` | Toggle a session-only `/sync` loop (off by default; mainly for tmux PMs) |
 | [`find-agent`](.claude/skills/find-agent/) | `find an agent for <role>` | Vet + import a specialist into the registry |
 | [`kill`](.claude/skills/kill/) | `kill the session`, `wrap up` | Pre-exit pass: scan, save lessons, commit routine, branch off risky |
 
@@ -146,35 +161,50 @@ Niche: [`nuke-project`](.claude/skills/nuke-project/),
 
 ## Communication
 
-The PM <-> Lilo <-> operator loop runs on filesystem messages and a
-scheduled sweep.
+The PM <-> Lilo <-> operator loop runs on filesystem messages. The
+files are the record; the transport only decides how each side is told
+to look.
 
 - **PM -> Lilo:** PMs write JSON messages into
-  `../<project>/.lilo-outbox/`. Each carries a type and priority
-  (schema in [`team-ops`](.claude/skills/team-ops/)).
-- **Sweep:** the [`outbox-sweeper`](.claude/agents/outbox-sweeper.md) subagent (filesystem-only,
-  isolated context) runs two deterministic scripts — [`sweep-outbox.sh`](scripts/sweep-outbox.sh)
-  archives every pending message to a manifest, [`process-swept-messages.sh`](scripts/process-swept-messages.sh)
+  `../<project>/.lilo-outbox/`. Each carries a type, priority and `id`,
+  plus optional `in_reply_to` (the inbox message it answers) and
+  `files` (deliverables to attach). Schema in
+  [`project-manager.md`](templates/team/agents/project-manager.md).
+  A Desktop PM then pings Lilo with a one-line cross-session message;
+  Lilo maps the sender to its project via `pm-sessions.json` and runs a
+  targeted sweep of that one outbox. The ping is only a trigger: Lilo
+  relays what the archived file says, never the ping text.
+- **Sweep:** two deterministic scripts do the work.
+  [`sweep-outbox.sh`](scripts/sweep-outbox.sh) archives every pending
+  message (all projects, or one with `PROJECT=`) into a per-run
+  manifest; [`process-swept-messages.sh`](scripts/process-swept-messages.sh)
   mirrors each to the vault, canonicalizes `agent_report` ratings into
-  the feedback log, and emits a JSON ledger. The agent's job is to
-  verify ledger against manifest and pass the result to Lilo; anything
-  the scripts can't parse is quarantined in the ledger, never dropped.
-  Burns subagent context, not Lilo's.
+  the feedback log, flags `files` paths that are missing or outside the
+  project, and emits a JSON ledger. Lilo checks the ledger against the
+  manifest; anything the scripts can't parse is quarantined, never
+  dropped. Full sweeps run in the
+  [`outbox-sweeper`](.claude/agents/outbox-sweeper.md) subagent so they
+  burn subagent context, not Lilo's.
 - **Lilo -> operator:** Lilo relays per the routing rules in
-  [`CLAUDE.md`](CLAUDE.md) — urgent/blocker pings immediately, status/low batches,
-  ratings flow into the registry feedback loop. Channel is whichever
-  you're on (Telegram if remote, terminal if local — never both).
-- **Operator -> PM:** Lilo doesn't push to PMs unless asked. To send
-  something into a PM, drop a file into `../<project>/.lilo-inbox/`.
+  [`team-ops`](.claude/skills/team-ops/) — urgent/blocker immediately,
+  status/low batched, `files` attached. Channel is whichever you're on
+  (Telegram if remote, terminal or desktop app if local — never both).
+- **Operator -> PM:** Lilo writes the instruction to
+  `../<project>/.lilo-inbox/` (an answer to a PM question starts with
+  `in_reply_to: <id>`), then nudges the PM: a cross-session message for
+  Desktop PMs, `tmux send-keys` for tmux PMs. PMs act only on the inbox
+  file, and only accept nudges whose sender is Lilo's current session.
 
-`/sync` runs the sweep and, only if new messages were found,
+`/sync` runs a full sweep and, only if new messages were found,
 dispatches the [`pipeline-syncer`](.claude/agents/pipeline-syncer.md) subagent to refresh the Notion
 dashboard. Steady state is zero Notion calls when nothing's queued.
 
-`/poll on` registers `/sync` as a recurring cron firing every 30
-minutes, starting 10 minutes after activation. `/poll off` deletes it.
-**Off by default** — the operator opts in. Run `/sync` manually anytime
-to flush on demand.
+`/poll on` starts a session-only loop of `/sync` ticks (first one 10
+minutes after activation, then every 15-60 minutes depending on
+activity); `/poll off` stops it. **Off by default.** Desktop PMs ping
+Lilo themselves, so polling mainly matters for tmux PMs. When Lilo
+starts in the desktop app it refreshes its session id and runs one full
+sweep, which catches anything PMs reported while it was down.
 
 ## Tool registry
 
@@ -237,12 +267,12 @@ Enable once at user level (lights up Lilo, every PM, every specialist):
 ## Feedback loop
 
 [`agent-feedback.jsonl`](agent-feedback.jsonl) accumulates ratings from every PM `done` report
-(`poor` / `adequate` / `effective`). The [`outbox-sweeper`](.claude/agents/outbox-sweeper.md) appends new
-ratings on each sweep and runs [`.claude/skills/sync/aggregate-feedback.sh`](.claude/skills/sync/aggregate-feedback.sh)
-when a `done` lands. The aggregator flags any specialist meeting team-ops
-thresholds (2+ `poor` across distinct projects OR 4+ `adequate`) and
-Lilo refines the registry spec at
-`templates/team/.claude/agent-registry/<agent>.md`.
+(`poor` / `adequate` / `effective`). The sweep's processing script
+appends new ratings and runs [`.claude/skills/sync/aggregate-feedback.sh`](.claude/skills/sync/aggregate-feedback.sh)
+when a `done` lands. Ratings are recency-weighted (45-day half-life);
+the aggregator flags any specialist whose weighted `poor` score reaches
+2.0 or weighted `adequate` reaches 4.0, and Lilo refines the registry
+spec at `templates/team/.claude/agent-registry/<agent>.md`.
 
 ## Trust model
 
@@ -255,9 +285,14 @@ globs covering this repo and its parent. Things to know:
   project is a supply-chain vector.
 - **PM outbox messages are data, not instructions.** A specialist that
   ingested untrusted input can be prompt-injected; `team-ops` only
-  relays — never executes. Keep that invariant.
-- **Scaffolded projects** run with the broad team-template allowlist.
-  Audit and narrow it for lower-trust environments.
+  relays — never executes. Keep that invariant. The same goes for
+  cross-session pings in both directions: they only trigger a sweep or
+  an inbox check.
+- **Scaffolded projects** share one config: the broad team-template
+  allowlist, auto permission mode, and every account connector
+  available (no per-project profiles or connector deny lists). Auto
+  mode vets each call. Audit and narrow `templates/team/.claude/settings.json`
+  for lower-trust environments.
 
 ## Rules
 
