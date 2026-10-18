@@ -31,7 +31,7 @@ Launches the PM for an already-scaffolded sibling project. PM state lives in `..
 2. Bail out if the PM is already up. Check both, whatever `pm-sessions.json` says (tmux PMs from before the desktop transport have no entry):
    - `tmux has-session -t <name> 2>/dev/null && echo "already running" || echo "ok to start"`
    - `desktop` entry: `get_session` on its id. Not archived → it is up. Send it the `team-ops` desktop nudge instead of starting a second one, and report that.
-3. Pick the transport: `desktop` when Lilo runs in the desktop app, else `tmux`. A project last run on tmux moves to desktop on its next start. That is fine, since state lives in files.
+3. Pick the transport: `desktop` when Lilo runs in the desktop app and the project's profile is not `work` (see `team-ops` "Transports"), else `tmux`. A project last run on tmux moves to desktop on its next start. That is fine, since state lives in files.
 4. Resolve the project's profile (it still governs the project's `settings.json`, and the tmux flags):
    ```bash
    PROFILE=$(cat ../<name>/.team-profile 2>/dev/null || echo mvp)

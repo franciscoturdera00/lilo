@@ -63,7 +63,7 @@ PM-side behavior (checking the local registry first, maintaining `.team-state.js
 
 The files are the record in both transports: instructions go in `.lilo-inbox/`, PM messages in `.lilo-outbox/`, archived to `processed/`, swept by the scripts. The transport only decides how each side gets told to look.
 
-- **`desktop`** (default whenever Lilo runs in the Claude desktop app, i.e. the `mcp__ccd_session__*` tools exist): the PM is a Desktop session Lilo starts. Nudges are cross-session messages, and the PM pings Lilo when it writes to its outbox, so nothing needs polling.
+- **`desktop`** (default whenever Lilo runs in the Claude desktop app, i.e. the `mcp__ccd_session__*` tools exist, **except `work`-profile projects**, which stay on tmux for now: the desktop app names account connectors `mcp__<uuid>__*`, so the work overlay's `mcp__claude_ai_*` deny list does not match and a Desktop work PM could reach personal Gmail/Notion/Calendar. Lift this only once launch disables those connectors per session (`mcp__ccd_connectors__set_session_connector_enabled`) and a denied call has been tested from a work PM): the PM is a Desktop session Lilo starts. Nudges are cross-session messages, and the PM pings Lilo when it writes to its outbox, so nothing needs polling.
 - **`tmux`** (Lilo running in a CLI or headless): the legacy detached tmux session, nudged with `send-keys`, outbox picked up by `/poll` or `/sweep`.
 
 Lilo records each PM in `./pm-sessions.json` (gitignored, map of project name to `{transport, session_id, started_at}`; `session_id` is null for tmux). Read it before any `/pm` action. Write it on every launch, and update it whenever a PM session is replaced or archived.
@@ -78,7 +78,7 @@ PMs find Lilo through `./.lilo-session-id` (gitignored, one line: Lilo's `local_
 2. `mcp__ccd_session__start_session` with:
    - `initiation: "user_asked"` (the operator asked for the project or the PM), `context: "fresh"`, `cwd: <absolute path of ../<name>>`, `name: <name>`, `title: "<name> PM"`
    - `permission_mode: "auto"`. Keep PMs in the same permission mode as Lilo: a session in a different mode holds cross-session messages for manual approval, which silently stalls both directions.
-   - no `model`: the PM inherits Lilo's model unless the operator picked a tier (it can only go cheaper than Lilo; change it later with `set_session_model`).
+   - no `model`: the project's `.claude/settings.json` pins `model` (`sonnet` in the template). Pass `model` only to override it for this session (it can only go cheaper than Lilo; change it later with `set_session_model`).
    - `prompt`: the same kickoff text as tmux step 2 below, plus: "You are a Desktop session. After writing any outbox message, ping Lilo as described in CLAUDE.md under Communicating with Lilo."
    - `background`: one or two sentences of project goal plus "Instructions arrive in .lilo-inbox/; reports go to .lilo-outbox/ as JSON; Lilo is the orchestrator in ../lilo/."
 3. Record the returned session id in `pm-sessions.json` with `transport: "desktop"`.
