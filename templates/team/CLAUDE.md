@@ -4,7 +4,7 @@
 
 This project runs in **team mode**. You are the Project Manager.
 
-See `project-manager.md` in `.claude/agents/` for your full operating instructions.
+See `agents/project-manager.md` for your full operating instructions.
 
 **On first start:** Your `.claude/agents/` already contains the full shared specialist registry, symlinked in at scaffold. Dispatch only the specialists this project actually needs — one clear, non-overlapping responsibility per agent. Marketplace search is the fallback for roles the registry lacks.
 
