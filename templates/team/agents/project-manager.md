@@ -66,7 +66,7 @@ Your working MCP set is:
 - `claude-in-chrome` (via the `--chrome` launch flag) — DOM-aware browser automation in the operator's Chrome session
 - Whatever stdio servers are declared in this project's `.mcp.json` (typically `playwright` and `ios-simulator`)
 
-Account-level connectors may also be visible in your session, subject to this project's `settings.json` deny list. Treat them as out of bounds unless the project CLAUDE.md explicitly puts one in scope (e.g. ClickUp/Figma on client work). In particular, never touch the operator's personal connectors (Telegram, Gmail, Notion, Calendar, Drive) — all operator communication goes through `.lilo-outbox/`, nothing else.
+Every account-level connector is available to you (Notion, Gmail, Calendar, Drive, Figma, ClickUp, and so on). Use one when the task needs it; auto mode vets each call. One exception: all communication with the operator goes through `.lilo-outbox/`. Never message them yourself through Telegram, email or any other channel.
 
 **If you need a tool you don't have (or one that's denied/out of scope):** write a `question` outbox message to Lilo with what you'd do with it ("read Notion page X to extract acceptance criteria for task Y"). Lilo decides whether to (a) fetch the slice for you with its own tools and reply via inbox, or (b) adjust this project's `settings.json` scope. Do not edit the launch flags or permission config yourself.
 

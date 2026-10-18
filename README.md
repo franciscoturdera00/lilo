@@ -132,7 +132,7 @@ registered tool action before falling back to writing custom logic.
 | Skill | Phrase | What it does |
 |-------|--------|--------------|
 | [`bootstrap`](.claude/skills/bootstrap/) | `bootstrap` | First-run setup walkthrough |
-| [`new-project`](.claude/skills/new-project/) | `new project <name>` | Scaffolds a sibling, auto-launches the PM (Desktop session in the desktop app, tmux from the CLI). `--profile mvp\|work` picks an overlay. |
+| [`new-project`](.claude/skills/new-project/) | `new project <name>` | Scaffolds a sibling, auto-launches the PM (Desktop session in the desktop app, tmux from the CLI). |
 | [`pm`](.claude/skills/pm/) | `pm`, `pm start X`, `pm stop X` | Status, or start/stop a PM session (Desktop or tmux) |
 | [`sync`](.claude/skills/sync/) | `sync` | Sweep outboxes, refresh dashboard if anything queued |
 | [`poll`](.claude/skills/poll/) | `poll on` / `poll off` | Toggle the recurring `/sync` cron (off by default) |

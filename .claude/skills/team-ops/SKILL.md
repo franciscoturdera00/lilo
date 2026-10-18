@@ -18,7 +18,7 @@ Lilo's playbook for projects. Covers the three coordination duties that are core
 Runs after the `new-project` skill has already copied `templates/team/` into `../<name>/` and substituted `{{PROJECT_NAME}}`. Do these steps in order:
 
 1. Ensure the scaffold included `.claude/agents/` and `CLAUDE.md`. The `cp -R templates/team/. ../<name>/` line in the scaffold recipe handles this; verify with `ls -la ../<name>/.claude/`. Note: agent specs live in the orchestrator's registry and are symlinked in step 3 — no per-project `agent-registry/` copy.
-2. Create the comms dirs, seed the team-state files, and stamp the profile in the project root. Skip the seeds on resume — if `.team-state.json` already exists, leave it (and `.team-history.jsonl`, and `.team-profile`) alone:
+2. Create the comms dirs and seed the team-state files in the project root. Skip the seeds on resume — if `.team-state.json` already exists, leave it (and `.team-history.jsonl`) alone:
    ```bash
    mkdir -p ../<name>/.lilo-inbox ../<name>/.lilo-outbox
    if [ ! -f ../<name>/.team-state.json ]; then
@@ -36,9 +36,8 @@ Runs after the `new-project` skill has already copied `templates/team/` into `..
      }' > ../<name>/.team-state.json
      : > ../<name>/.team-history.jsonl
    fi
-   [ -f ../<name>/.team-profile ] || echo "<profile>" > ../<name>/.team-profile
    ```
-   All three files live at repo root (not under `.claude/`). `.team-state.json` is gitignored by the template; `.team-history.jsonl` and `.team-profile` are intentionally tracked. `.team-profile` records which overlay (`mvp` or `work`) the project was scaffolded with so `/pm start` can re-launch with the right flags.
+   Both files live at repo root (not under `.claude/`). `.team-state.json` is gitignored by the template; `.team-history.jsonl` is intentionally tracked.
 3. **Symlink `.claude/agents/` to the orchestrator's registry — fresh scaffolds only.** Claude Code only indexes subagents that exist in `.claude/agents/` at session start. Use symlinks (not copies) so registry edits propagate to every project on next session start, with no per-project drift. **Skip this step on resume:** if `../<name>/.claude/agents/` already has real files (anything other than the template's `.gitkeep`), do nothing — agents/manual edits there are intentional.
    ```bash
    # The template ships a .gitkeep so the empty dir tracks under git.
@@ -55,7 +54,7 @@ Runs after the `new-project` skill has already copied `templates/team/` into `..
    ```
    The relative path resolves because every project is a sibling of this repo, `lilo/`. Verify it after linking — a dangling symlink lists exactly like a real file, so a wrong target silently gives the PM zero specialists: `for f in ../<name>/.claude/agents/*; do [ -e "$f" ] || echo "DANGLING $f"; done`. Adding a new spec to the registry later: re-run the loop in any project that should pick it up, or symlink the one new file manually. Customizing one agent for a single project: `rm` the symlink and replace it with a real file.
 4. Write the initial task to `../<name>/.lilo-inbox/<timestamp>-initial-task.md`. Content is whatever the operator described as the project goal.
-5. Launch the PM and kick it off using the project's transport (next section). Pass `<profile>` through: it still decides the project's `settings.json` (the `work` overlay's deny list), and in tmux mode it also supplies the CLI flags.
+5. Launch the PM and kick it off using the project's transport (next section).
 
 PM-side behavior (checking the local registry first, maintaining `.team-state.json`, staleness audits on resume) is documented in `templates/team/agents/project-manager.md` and does not need to be restated here.
 
@@ -63,7 +62,7 @@ PM-side behavior (checking the local registry first, maintaining `.team-state.js
 
 The files are the record in both transports: instructions go in `.lilo-inbox/`, PM messages in `.lilo-outbox/`, archived to `processed/`, swept by the scripts. The transport only decides how each side gets told to look.
 
-- **`desktop`** (default whenever Lilo runs in the Claude desktop app, i.e. the `mcp__ccd_session__*` tools exist, **except `work`-profile projects**, which stay on tmux for now: the desktop app names account connectors `mcp__<uuid>__*`, so the work overlay's `mcp__claude_ai_*` deny list does not match and a Desktop work PM could reach personal Gmail/Notion/Calendar. Lift this only once launch disables those connectors per session (`mcp__ccd_connectors__set_session_connector_enabled`) and a denied call has been tested from a work PM): the PM is a Desktop session Lilo starts. Nudges are cross-session messages, and the PM pings Lilo when it writes to its outbox, so nothing needs polling.
+- **`desktop`** (default whenever Lilo runs in the Claude desktop app, i.e. the `mcp__ccd_session__*` tools exist): the PM is a Desktop session Lilo starts. Nudges are cross-session messages, and the PM pings Lilo when it writes to its outbox, so nothing needs polling.
 - **`tmux`** (Lilo running in a CLI or headless): the legacy detached tmux session, nudged with `send-keys`, outbox picked up by `/poll` or `/sweep`.
 
 Lilo records each PM in `./pm-sessions.json` (gitignored, map of project name to `{transport, session_id, started_at}`; `session_id` is null for tmux). Read it before any `/pm` action. Write it on every launch, and update it whenever a PM session is replaced or archived.
@@ -84,7 +83,7 @@ PMs find Lilo through `./.lilo-session-id` (gitignored, one line: Lilo's `local_
 3. Record the returned session id in `pm-sessions.json` with `transport: "desktop"`.
 4. If the result says the folder needs trust or approval, tell the operator in one line; do not fall back to tmux silently.
 
-The `work` profile's `--chrome` flag has no Desktop equivalent: Chrome tools reach a Desktop PM only if Claude in Chrome is enabled in the app.
+The tmux launch's `--chrome` flag has no Desktop equivalent: Chrome tools reach a Desktop PM only if Claude in Chrome is enabled in the app.
 
 #### desktop: further instructions
 
@@ -96,12 +95,11 @@ Two things wake Lilo about a PM: a `<cross-session-message>` ping the PM sends a
 
 #### tmux: launch and kick off
 
-1. Launch the PM in a detached tmux session. Read the CLI flags from the profile's overlay (`templates/overlays/<profile>/launch.flags`) so they live in one place. `<profile>` is whatever `new-project` resolved (default `mvp`):
+1. Launch the PM in a detached tmux session:
    ```bash
-   FLAGS=$(cat templates/overlays/<profile>/launch.flags)
-   tmux new -d -s <name> "cd ../<name> && claude $FLAGS"
+   tmux new -d -s <name> "cd ../<name> && claude --permission-mode auto --chrome"
    ```
-   Profile defaults today: both profiles launch with `--permission-mode auto --chrome`. `auto` lets Claude self-vet permission prompts, blocking risky actions while auto-approving safe ones. No MCP flags — the project's `.mcp.json` (`playwright` + `ios-simulator`) and account-level connectors load per Claude Code's normal config resolution. What still separates the profiles is the `work` overlay's `project/` subtree: a tighter `settings.json` (deny list blocking personal connectors — Telegram/Notion/Gmail/etc. — plus `git push`/publish/destructive-op denies) and its own `.mcp.json`. `mvp` has no deny list, so account connectors are available to mvp PMs.
+   `auto` lets Claude self-vet each tool call, blocking risky actions while auto-approving safe ones. No MCP flags — the project's `.mcp.json` (`playwright` + `ios-simulator`) and all account-level connectors load per Claude Code's normal config resolution.
 2. Kick off the PM with the check-inbox nudge. **Send the text and the Enter as two separate `tmux send-keys` calls, with a brief sleep between.** A single call with inline `Enter` (or `C-m`) often queues the prompt into the input buffer without submitting it — the operator then sees an unsent prompt and has to nudge Lilo to press send. Two calls is reliable:
    ```bash
    tmux send-keys -t <name> "Run /check-inbox to read your first task, then start working. Run /check-inbox again at every natural breakpoint (end of phase, after long operations, whenever I nudge you) — new instructions from the operator land there asynchronously. Write status updates to .lilo-outbox/ as you go."

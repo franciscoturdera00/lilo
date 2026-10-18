@@ -116,6 +116,8 @@ Err on the lean side. Pulling the whole registry into Lilo's agents dir makes it
 
 Same rule in reverse: if you retire or rename an MCP / CLI, prune the corresponding entry.
 
+There is a single project config (no profiles): every connector is available to PMs, and auto mode vets each call. Allow rules need a literal server name (`mcp__*` is ignored for allow), so list each connector as `mcp__claude_ai_<Name>__*`. In the desktop app, account connectors are named `mcp__<uuid>__*`, which the shared template cannot list portably; auto mode covers those.
+
 - NEVER modify sibling project code directly — only create new projects and read/write their `.lilo-inbox/` and `.lilo-outbox/`. Exception: this repo (including `./tools/`) is owned by Lilo and may be edited.
 - ALWAYS confirm before nuking (deleting files)
 - Keep responses SHORT — the operator is often on their phone
