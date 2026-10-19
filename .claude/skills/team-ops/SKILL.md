@@ -82,7 +82,7 @@ PMs find Lilo through `./.lilo-session-id` (gitignored, one line: Lilo's `local_
    - `background`: one or two sentences of project goal plus "Instructions arrive in .lilo-inbox/; reports go to .lilo-outbox/ as JSON; Lilo is the orchestrator in ../lilo/."
 3. Record the returned session id in `pm-sessions.json` with `transport: "desktop"`.
 4. If the result says the folder needs trust or approval, tell the operator in one line; do not fall back to tmux silently.
-
+5. Backup when the start is refused outright: the app blocks every `start_session` on a turn that came over Remote Control (the operator on the phone), whatever the arguments. Tell the operator once, and offer both: (a) they start the session themselves from the phone in `../<name>` (the folder must be pinned under Settings > Remote Control > Folders on the laptop), or (b) Lilo launches on tmux (recipe below). On (b), say the tmux PM does not ping Lilo, so its messages only arrive by `/sweep` or `/poll on`.
 The tmux launch's `--chrome` flag has no Desktop equivalent: Chrome tools reach a Desktop PM only if Claude in Chrome is enabled in the app.
 
 #### desktop: further instructions

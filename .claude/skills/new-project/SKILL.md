@@ -42,4 +42,4 @@ Then invoke the `team-ops` skill for the post-scaffold launch steps
 (inbox/outbox dirs, initial task file, PM launch and kickoff on the right transport).
 
 Report back that the project is ready and where the PM runs (a link to its
-Desktop session, or the `<name>` tmux session). For client work, remind the operator to set repo-local `git config user.email` to their work address inside any cloned work repos under the project dir — the PM cannot infer it.
+Desktop session, or the `<name>` tmux session). For client work, remind the operator to set repo-local `git config user.email` to their work address inside any cloned work repos under the project dir — the PM cannot infer it. Always add one line: to start this PM from the phone, pin `../<name>` on the laptop under Settings > Remote Control > Folders > Add folder (the app cannot browse into subfolders, and Lilo cannot change that list).
