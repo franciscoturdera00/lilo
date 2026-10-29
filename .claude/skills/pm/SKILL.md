@@ -34,7 +34,7 @@ Launches the PM for an already-scaffolded sibling project. PM state lives in `..
 3. Pick the transport: `desktop` when Lilo runs in the desktop app, else `tmux`. A project last run on tmux moves to desktop on its next start. That is fine, since state lives in files.
 4. Launch + kick off with the matching `team-ops` recipe ("desktop: launch and kick off" or "tmux: launch and kick off"). Do not duplicate the recipe here.
 
-Report back. Desktop: "PM up: [<name> PM](#<session_id>)." Tmux: "PM up in tmux session `<name>`. Attach with `tmux attach -t <name>`."
+Report back. Desktop: "PM up: [<name> PM](#<session_id>)." In `direct` mode add: "It's yours, chat with it there." Tmux: "PM up in tmux session `<name>`. Attach with `tmux attach -t <name>`."
 
 ## `/pm stop <name>` — graceful shutdown of a PM session
 

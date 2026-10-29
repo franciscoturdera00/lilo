@@ -180,10 +180,10 @@ You are not done until you have formally closed out. Never let the session idle 
 2. For each task, verify its acceptance criteria are met — re-read the criteria and check the artifact
 3. If any criterion fails:
    - **Fixable** → continue the specialist that did the work via `SendMessage` with a tight, targeted delta (see "Continue, do not respawn" in Phase 2). Re-review by continuing the original reviewer the same way
-   - **Not fixable without input** → write a `blocker` outbox message with priority `high` and wait. Do NOT mark done
-4. Once every criterion passes, write a `done` outbox message (schema below) including the `agent_report` field
+   - **Not fixable without input** → raise a blocker (in `direct` mode, ask the operator in your session; otherwise a `blocker` outbox message with priority `high`) and wait. Do NOT mark done
+4. Once every criterion passes, write a `done` outbox message (schema below) including the `agent_report` field. In `direct` mode, also give the operator the summary in your session
 5. Update `.team-state.json` with `status: "completed"` and `completed_at: <ISO timestamp>`
-6. End cleanly. tmux: `exit` from the Claude session so tmux terminates. Desktop: end your turn after pinging Lilo and do not exit. The operator may come back to this session with follow-ups, and Lilo archives it when the project is stopped.
+6. End cleanly. tmux: `exit` from the Claude session so tmux terminates. Desktop: end your turn (after pinging Lilo, in `relay` mode) and do not exit. The operator may come back to this session with follow-ups, and Lilo archives it when the project is stopped.
 
 ---
 
@@ -309,7 +309,7 @@ Do not rephrase or filter the specialist's question. A 30-second answer from the
 
 ## Communicating with Lilo (structured JSON outbox)
 
-You run in a session Lilo manages (a Desktop session or tmux; see the project CLAUDE.md, "Communicating with Lilo", which also has the Desktop ping step). The operator reaches you through Lilo, or directly in your Desktop session.
+You run in a session Lilo manages (a Desktop session or tmux; see the project CLAUDE.md, "Communicating with Lilo", which also has the Desktop ping step). `.lilo-mode` decides who you report to. In `direct` mode (the Desktop default) the operator chats with you in your session: questions, blockers and status go in your replies there, and the only outbox message you write is the final `done`, with no ping. In `relay` mode (and in tmux) everything below goes through the outbox. The schema applies to every outbox message in both modes.
 
 ### Outbox — write JSON files to `.lilo-outbox/<timestamp>-<slug>.json`
 
@@ -387,7 +387,7 @@ Lilo writes instructions to `.lilo-inbox/`. Files may be plain markdown or JSON.
 
 ### After writing outbox
 
-In a Desktop session, ping Lilo first (CLAUDE.md). Then keep working unless the message was `question` or `blocker` — in those cases, wait for an inbox reply before proceeding on the blocked work (you may continue unrelated work). Waiting in Desktop means ending your turn: Lilo's nudge wakes you when the reply lands. If the operator answers you directly in your session instead, that answer counts. Note it in `.team-history.jsonl` and tell Lilo with a `status` message that the question is closed (`in_reply_to` set to the question's `id`), so Lilo does not ask the operator again.
+In a Desktop session in `relay` mode, ping Lilo first (CLAUDE.md). Then keep working unless the message was `question` or `blocker` — in those cases, wait for an inbox reply before proceeding on the blocked work (you may continue unrelated work). Waiting in Desktop means ending your turn: Lilo's nudge wakes you when the reply lands. If the operator answers you directly in your session instead, that answer counts. Note it in `.team-history.jsonl` and tell Lilo with a `status` message that the question is closed (`in_reply_to` set to the question's `id`), so Lilo does not ask the operator again.
 
 ---
 

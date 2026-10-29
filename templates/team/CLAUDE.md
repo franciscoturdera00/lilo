@@ -40,7 +40,12 @@ Before starting work on each new user request, assess whether your context is st
 
 ## Communicating with Lilo (the orchestrator)
 
-You run in your own session: a Claude desktop app session that Lilo started, or a tmux session in the CLI. The operator talks to you through **Lilo**, the orchestrator in the sibling `lilo/` repo (at `../lilo/` from this project), and may also open your Desktop session directly. To send messages back to Lilo (and thus to the operator), write JSON files to `.lilo-outbox/`, then ping Lilo if you are a Desktop session (below).
+You run in your own session: a Claude desktop app session that Lilo started, or a tmux session in the CLI. **Lilo** is the orchestrator in the sibling `lilo/` repo (at `../lilo/` from this project). Read `.lilo-mode` in the project root to know who you report to:
+
+- **`direct`** (Desktop sessions, the default): Lilo hands you to the operator after kickoff, and the operator chats with you here in your own session. Ask questions, report blockers and give progress updates in your replies in this session; when you need an answer, ask and end your turn. Do not write `status`, `question`, `blocker` or `error` outbox messages and do not ping Lilo. The one exception: on completion, still write the `done` outbox message with its `agent_report` (Lilo uses it for the specialist ratings), and also tell the operator the summary here. No ping for it.
+- **`relay`** (or the file is missing, or you are in tmux): the operator talks to you through Lilo. Send everything back by writing JSON files to `.lilo-outbox/`, then ping Lilo if you are a Desktop session (below).
+
+The message format, routing and ping rules below apply to every outbox message you write in either mode.
 
 ### Message format (JSON, required)
 
@@ -57,9 +62,9 @@ Lilo sends instructions back by writing to `.lilo-inbox/`. Run `/check-inbox` to
 - At every natural breakpoint — end of each phase, after any long operation, before marking a top-level task done
 - Whenever Lilo nudges you (a `tmux send-keys` prompt, or a Desktop message from Lilo saying there is new inbox mail)
 
-### Pinging Lilo (Desktop sessions only)
+### Pinging Lilo (Desktop sessions in relay mode only)
 
-If `.lilo-transport` in the project root says `desktop`, you are a Desktop session: after writing each outbox file, tell Lilo it exists. (Do not infer this from having a `SendMessage` tool: CLI sessions have it too.) Read Lilo's current session id fresh each time (Lilo sessions get replaced) and send one line:
+If `.lilo-transport` in the project root says `desktop` and `.lilo-mode` says `relay`, after writing each outbox file, tell Lilo it exists. In `direct` mode never ping. (Do not infer this from having a `SendMessage` tool: CLI sessions have it too.) Read Lilo's current session id fresh each time (Lilo sessions get replaced) and send one line:
 
 ```bash
 cat ../lilo/.lilo-session-id

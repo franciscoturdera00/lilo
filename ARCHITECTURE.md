@@ -57,11 +57,11 @@ decides how each side is told to look. `team-ops` owns the recipes.
 |---|---|---|
 | PM runs as | a linked Desktop session (`start_session`, auto mode) | a detached tmux session (`claude --permission-mode auto --chrome`) |
 | Lilo -> PM | inbox file + cross-session nudge | inbox file + `tmux send-keys` |
-| PM -> Lilo | outbox file + cross-session ping -> targeted sweep | outbox file, picked up by `/sync` or `/poll` |
+| PM -> operator | `direct` (default): in the PM's own session; only `done` hits the outbox, unpinged. `relay`: outbox file + cross-session ping -> targeted sweep | outbox file, picked up by `/sync` or `/poll` |
 | Stop | `/kill` via inbox, then archive the session | `/kill` via `send-keys`, then `tmux kill-session` |
 
 Lilo records each PM in `pm-sessions.json` and writes `.lilo-transport`
-into the project so the PM knows whether to ping. PMs read Lilo's
+and `.lilo-mode` into the project so the PM knows whether to ping. PMs read Lilo's
 current id from `../lilo/.lilo-session-id` and accept nudges only from
 it. Every project uses the same config: the team template, auto
 permission mode, all account connectors available.

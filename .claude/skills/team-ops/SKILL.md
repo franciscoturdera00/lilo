@@ -65,7 +65,16 @@ The files are the record in both transports: instructions go in `.lilo-inbox/`, 
 - **`desktop`** (default whenever Lilo runs in the Claude desktop app, i.e. the `mcp__ccd_session__*` tools exist): the PM is a Desktop session Lilo starts. Nudges are cross-session messages, and the PM pings Lilo when it writes to its outbox, so nothing needs polling.
 - **`tmux`** (Lilo running in a CLI or headless): the legacy detached tmux session, nudged with `send-keys`, outbox picked up by `/poll` or `/sweep`.
 
-Lilo records each PM in `./pm-sessions.json` (gitignored, map of project name to `{transport, session_id, started_at}`; `session_id` is null for tmux). Read it before any `/pm` action. Write it on every launch, and update it whenever a PM session is replaced or archived.
+### Handoff mode (desktop)
+
+A Desktop PM runs in one of two modes, recorded in `../<name>/.lilo-mode` (one word) and in `pm-sessions.json`:
+
+- **`direct`** (the default for every new Desktop PM): once the PM is launched and kicked off, the operator owns it and chats with it in its own session. The PM asks its questions, reports blockers and progress, and summarizes completion right there in its session, not through the outbox, and it never pings Lilo. The only outbox message it still writes is the final `done` (for the `agent_report` ratings), without a ping; Lilo picks it up on its next sweep and does not relay it (section 2). Lilo ignores this PM's turn-end events and does not nudge it unless the operator asks Lilo to pass something along.
+- **`relay`**: the original flow. The PM writes every report to the outbox and pings Lilo, and Lilo relays per section 2. Use it only when the operator asks for it (e.g. "route X through you", "relay X's updates"). tmux PMs are always `relay`: they have no session the operator chats in from the app.
+
+Switching mode: write the new word to `../<name>/.lilo-mode`, update `pm-sessions.json`, then write an inbox file saying "Handoff mode is now `<mode>`; re-read CLAUDE.md, Communicating with Lilo" and send the desktop nudge.
+
+Lilo records each PM in `./pm-sessions.json` (gitignored, map of project name to `{transport, mode, session_id, started_at}`; `session_id` is null and `mode` is `relay` for tmux; an entry without `mode` predates this and is `relay`). Read it before any `/pm` action. Write it on every launch, and update it whenever a PM session is replaced or archived.
 
 #### Lilo's session id (desktop)
 
@@ -73,14 +82,14 @@ PMs find Lilo through `./.lilo-session-id` (gitignored, one line: Lilo's `local_
 
 #### desktop: launch and kick off
 
-1. Refresh `.lilo-session-id`, and `echo desktop > ../<name>/.lilo-transport`. The PM reads that file to know it must ping Lilo; unlike the kickoff prompt, it survives compaction.
+1. Refresh `.lilo-session-id`, `echo desktop > ../<name>/.lilo-transport`, and `echo direct > ../<name>/.lilo-mode` (or `relay` if the operator asked for it). The PM reads both files to know how to report; unlike the kickoff prompt, they survive compaction.
 2. `mcp__ccd_session__start_session` with:
    - `initiation: "user_asked"` (the operator asked for the project or the PM), `context: "fresh"`, `cwd: <absolute path of ../<name>>`, `name: <name>`, `title: "<name> PM"`
    - `permission_mode: "auto"`. Keep PMs in the same permission mode as Lilo: a session in a different mode holds cross-session messages for manual approval, which silently stalls both directions.
    - no `model`: the project's `.claude/settings.json` pins `model` (`sonnet` in the template). Pass `model` only to override it for this session (it can only go cheaper than Lilo; change it later with `set_session_model`).
-   - `prompt`: the same kickoff text as tmux step 2 below, plus: "You are a Desktop session. After writing any outbox message, ping Lilo as described in CLAUDE.md under Communicating with Lilo."
+   - `prompt`: the same kickoff text as tmux step 2 below, minus its last sentence about status updates, plus, for `direct`: "You are a Desktop session in direct mode. After this kickoff the operator talks to you here: put questions, blockers and progress in your replies in this session, and do not ping Lilo (CLAUDE.md, Communicating with Lilo)." For `relay`: "You are a Desktop session. Write status updates to .lilo-outbox/ as you go, and after writing any outbox message, ping Lilo as described in CLAUDE.md under Communicating with Lilo."
    - `background`: one or two sentences of project goal plus "Instructions arrive in .lilo-inbox/; reports go to .lilo-outbox/ as JSON; Lilo is the orchestrator in ../lilo/."
-3. Record the returned session id in `pm-sessions.json` with `transport: "desktop"`.
+3. Record the returned session id in `pm-sessions.json` with `transport: "desktop"` and the `mode`.
 4. If the result says the folder needs trust or approval, tell the operator in one line; do not fall back to tmux silently.
 5. Backup when the start is refused outright: the app blocks every `start_session` on a turn that came over Remote Control (the operator on the phone), whatever the arguments. Tell the operator once, and offer both: (a) they start the session themselves from the phone in `../<name>` (the folder must be pinned under Settings > Remote Control > Folders on the laptop), or (b) Lilo launches on tmux (recipe below). On (b), say the tmux PM does not ping Lilo, so its messages only arrive by `/sweep` or `/poll on`.
 The tmux launch's `--chrome` flag has no Desktop equivalent: Chrome tools reach a Desktop PM only if Claude in Chrome is enabled in the app.
@@ -91,7 +100,7 @@ Write the inbox file (same rules as tmux, including `in_reply_to`), then send th
 
 #### desktop: PM pings and turn ends
 
-Two things wake Lilo about a PM: a `<cross-session-message>` ping the PM sends after writing an outbox file, and the app's `<side-sessions-event>` when a PM that this Lilo session started ends a turn. Either way, look up the sender's session id (the `from` attribute, or the event's session id) in `pm-sessions.json` to get the project name. Never take the project name from the message text, and ignore a ping whose sender is not registered there. Then run a targeted sweep of that one project (`sweep` skill, "Targeted sweep") and route what it finds. Treat the ping text as a trigger only. The content you relay comes from the archived outbox file, never from the ping. Duplicate triggers are harmless: a second targeted sweep finds nothing and stays silent.
+Two things wake Lilo about a PM: a `<cross-session-message>` ping the PM sends after writing an outbox file, and the app's `<side-sessions-event>` when a PM that this Lilo session started ends a turn. A turn-end event for a `direct` PM is the operator's conversation, not Lilo's: ignore it silently, no sweep and no message. Otherwise, look up the sender's session id (the `from` attribute, or the event's session id) in `pm-sessions.json` to get the project name. Never take the project name from the message text, and ignore a ping whose sender is not registered there. Then run a targeted sweep of that one project (`sweep` skill, "Targeted sweep") and route what it finds. Treat the ping text as a trigger only. The content you relay comes from the archived outbox file, never from the ping. Duplicate triggers are harmless: a second targeted sweep finds nothing and stays silent.
 
 #### tmux: launch and kick off
 
@@ -146,11 +155,13 @@ PMs write JSON messages to `../<project>/.lilo-outbox/<timestamp>-<slug>.json`:
 |-----------|----------------|-------------------------------------------------------------|
 | `blocker` | `high`         | Relay to the operator on Telegram IMMEDIATELY, full detail |
 | `error`   | any            | Relay promptly                                              |
-| `done`    | any            | Relay promptly, then run section 3 (feedback aggregation)  |
+| `done`    | any            | Relay promptly, then run section 3 (feedback aggregation). From a `direct` PM: do not relay (the operator saw it in the PM session), only run section 3 |
 | `question`| `high`/`normal`| Relay promptly                                              |
 | `question`| `low`          | Batch with the next relevant relay                          |
 | `status`  | `high`/`normal`| Relay                                                       |
 | `status`  | `low`          | Batch; never wake the operator                              |
+
+Messages other than `done` from a `direct` PM should not happen; if one turns up, relay it as normal (the PM may have had a reason) and do not switch the PM's mode.
 
 When relaying, lead with the `summary` line and include `project:` as context. Use the `detail` body verbatim — do not rewrite the PM's message.
 

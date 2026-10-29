@@ -170,7 +170,10 @@ to look.
   plus optional `in_reply_to` (the inbox message it answers) and
   `files` (deliverables to attach). Schema in
   [`project-manager.md`](templates/team/agents/project-manager.md).
-  A Desktop PM then pings Lilo with a one-line cross-session message;
+  Desktop PMs default to **direct** mode: after launch you chat with
+  the PM in its own session, and it only writes its final `done` (for
+  agent ratings) to the outbox, without pinging. In `relay` mode, a
+  Desktop PM pings Lilo with a one-line cross-session message after each write;
   Lilo maps the sender to its project via `pm-sessions.json` and runs a
   targeted sweep of that one outbox. The ping is only a trigger: Lilo
   relays what the archived file says, never the ping text.
